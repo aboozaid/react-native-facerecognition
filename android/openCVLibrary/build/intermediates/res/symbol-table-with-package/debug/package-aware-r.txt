@@ -1,0 +1,12 @@
+org.opencv
+int attr camera_id 0x7f040001
+int attr show_fps 0x7f040002
+int drawable ic_launcher 0x7f090001
+int id any 0x7f0c0001
+int id back 0x7f0c0002
+int id front 0x7f0c0003
+int layout main 0x7f0f0001
+int string app_name 0x7f150001
+int[] styleable CameraBridgeViewBase { 0x7f040001, 0x7f040002 }
+int styleable CameraBridgeViewBase_camera_id 0
+int styleable CameraBridgeViewBase_show_fps 1

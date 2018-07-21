@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-hdpi-v4_ic_launcher.png.flat",
+        "source": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\bundles\\debug\\res\\drawable-hdpi-v4\\ic_launcher.png"
+    },
+    {
+        "merged": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-mdpi-v4_ic_launcher.png.flat",
+        "source": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\bundles\\debug\\res\\drawable-mdpi-v4\\ic_launcher.png"
+    },
+    {
+        "merged": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout_main.xml.flat",
+        "source": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\bundles\\debug\\res\\layout\\main.xml"
+    },
+    {
+        "merged": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-xhdpi-v4_ic_launcher.png.flat",
+        "source": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\bundles\\debug\\res\\drawable-xhdpi-v4\\ic_launcher.png"
+    },
+    {
+        "merged": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-ldpi-v4_ic_launcher.png.flat",
+        "source": "E:\\AssemCourses\\react-native libs\\react-native-facerecognition\\android\\openCVLibrary\\build\\intermediates\\bundles\\debug\\res\\drawable-ldpi-v4\\ic_launcher.png"
+    }
+]

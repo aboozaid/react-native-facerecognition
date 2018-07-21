@@ -1,0 +1,14 @@
+{
+  "name": "react-native-facerecognition",
+  "version": "1.0.0",
+  "description": "A face detection and recognition library for React Native. High quality and even Faster!",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Assem Abozaid <assemabozaidfcih@gmail.com>",
+  "license": "MIT",
+  "peerDependencies": {
+    "react-native": "^0.41.2"
+  }
+}
