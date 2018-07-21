@@ -154,9 +154,9 @@ We support three types of flags which described below:<br>
 `flag: Face.Detection.Scale: Downscale the image by 1.1 (scaleFactor) rather than zoom`<br>
 `flag: Face.Detection.Biggest: Usually to find the biggest object on the image`<br>
 `flag: Face.Detection.Canny: Enable canny detector which rejects some regions on image that contain few edges which cannot contain the searched object`<br>
-We have three main modules to detect faces using them called LBP & Cascade:<br>
+We have three main modules to detect faces called LBP & Cascade:<br>
 `module: Face.Detection.Module.Default: This module contain many trained faces and higher recall of faces`<br>
-`module: Face.Detection.Module.Cascade: Like default but with less trained faces but with high precision`<br>
+`module: Face.Detection.Module.Cascade: Like default but with less trained faces and high precision`<br>
 `module: Face.Detection.Module.LBP: Less faces trained but very precision for small face and faster`<br>
 >⚠️ Bear in mind that choose your module is very important as it effects the recognition step significantly
 >> [Checkout](https://stackoverflow.com/questions/20801015/recommended-values-for-opencv-detectmultiscale-parameters) this article will help you to understand how to initialize the other variables
