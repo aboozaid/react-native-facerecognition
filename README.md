@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <h2 align="center">
   <img src="https://www.genetec.com/assets/Images/Global%2FProducts%2FColumn%2FPRD-Column-Add-Ons-Reduce-Risk-of-Breaches.png" /><br>
   React Native Face Recognition [Android]
@@ -233,8 +232,4 @@ __Minimum__
   
 ## Licence
 
-MIT 
-=======
-# react-native-facerecognition
-A face detection and recognition library for React Native. High quality and even Faster!
->>>>>>> parent of b25997c... Update README.md
+MIT
