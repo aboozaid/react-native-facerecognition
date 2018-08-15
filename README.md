@@ -22,6 +22,12 @@ This library makes it easier for you to do your smarter idea if it depends on pe
 * New to Face Recognition? We recommend you start with the default values which described below.
 * Looking to contribute? feel free to join our community on [Slack](https://join.slack.com/t/rn-facerecognition/shared_invite/enQtNDAzNTQzMzczMzUwLThlMzhkMDU0ZGMyZjJmYzEwZTVjZmQzYjBiNmIwZDgyNDZkMmYwZWQzOGYwNzE3YmRkMTZmMmQxMGQ3YmY1OTg), and take a look into coming updates.
 * If you're trying to use the library on the last version of react native (0.56.0) it won't work as this version still has many bugs to fix.
+* If the library doesn't work with you, you need to check your mobile's CPU if it one of those:
+  * `x86 CPU` Download this package [Click here](https://mega.nz/#F!tME1gYxD!SdeQGNt6lEi9qr05vbE1kg)
+  * `x86_64 CPU` Download this package [Click here](https://mega.nz/#F!MAdDzCAA!UeHKjeGfBU5pzEdazUCUmA)
+  * `arm64-v8a CPU` Download this package [Click here](https://mega.nz/#F!9cclDKyb!g5CQvTc7F17hN5d8T2DoLA)<br>
+  
+After downloading on of those package you need to put that file into this location `react-native-facerecognition/android/app/src/main/jniLibs` and that's all!
 
 >⚠️ Since we're focusing our efforts on next updates, we are really welcome for any issues/pulls to improve the way we go.
 
@@ -41,11 +47,11 @@ This library makes it easier for you to do your smarter idea if it depends on pe
 * UI Component ✔️
 
 ### Real world examples
-<img src="https://preview.ibb.co/kmDT6y/Screenshot_20180720_151322.png" width="240">&nbsp;&nbsp;&nbsp;&nbsp;
-<img src="https://preview.ibb.co/n5VxzJ/Screenshot_20180720_151359.png" width="240">&nbsp;&nbsp;&nbsp;&nbsp;
-<img src="https://preview.ibb.co/ho8HzJ/Screenshot_20180720_151424.png" width="240">
 
-🔥 Video will be available ASAP.
+![Detection Faces](https://thumbs.gfycat.com/WeeHilariousAsianelephant-size_restricted.gif)
+![Detection Faces](https://thumbs.gfycat.com/ShockedCheapIvorybackedwoodswallow-size_restricted.gif)
+
+
 <hr>
 
 ### Code Example
@@ -253,7 +259,16 @@ __Arguments__
 __Minimum__
   - Two photos per face (Recommended if you're training for few faces like 2 or 3)
   - There's no maximum but the average is 3~4 photos per face to guarantee high accuracy
-  
+
+## Updates
+
+🚀 [Updates](https://github.com/assemmohamedali/react-native-facerecognition/blob/master/Updates.md) you can find all previous version and updates up to date!
+
+## Thank to
+
+[rn-openALPR](https://github.com/cardash/react-native-openalpr)
+[rn-camera](https://github.com/react-native-community/react-native-camera)
+
 ## Licence
 
 MIT
