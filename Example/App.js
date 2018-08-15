@@ -17,8 +17,7 @@ import {
   TouchableHighlight,
   DeviceEventEmitter
 } from 'react-native';
-import { RNCamera } from 'react-native-camera';
-import Face from 'react-native-facerecognition'
+import Camera from './src/index';
 import DialogManager, { SlideAnimation, DialogContent, DialogTitle, DialogButton } from 'react-native-dialog-component';
 
 export default class App extends Component {
@@ -31,107 +30,83 @@ export default class App extends Component {
     this.state = {
       dataSource: this.ds.cloneWithRows(faces),
       captured: 1,
-      faces: faces,
-      type: 'front'
+      faces: faces
     };
+    
   }
-  componentDidMount() {
-    DeviceEventEmitter.addListener("onFaceRecognized", this.onFaceRecognized.bind(this))
-    DeviceEventEmitter.addListener("onClean", this.onClean.bind(this))
+  onTrained = () => {
+      ToastAndroid.show("Trained", ToastAndroid.SHORT);
+  }
+  onUntrained = ({error}) => {
+    ToastAndroid.show(error, ToastAndroid.SHORT);
+  }
+  onRecognized = ({name, confidence}) => {
+    ToastAndroid.show("Recognized: " + name + " and Confidence " + confidence, ToastAndroid.LONG)
+  }
+  onUnrecognized = ({error}) => {
+    ToastAndroid.show(error, ToastAndroid.SHORT)
   }
   render() {
     return (
       <View style={styles.container}>
-        <RNCamera
-            ref={ref => {
-              this.camera = ref;
-            }}
-            style = {styles.preview}
-            type={this.state.type}
-            permissionDialogTitle={'Permission to use camera'}
-            permissionDialogMessage={'We need your permission to use your camera phone'}
-            onMountError={(msg) => this.cameraError(msg)}
-            onCameraReady={() => {this.onCameraReady()}}
+        <Camera
+          ref={(cam) => {
+            this.camera = cam;
+          }}
+          style={styles.preview}
+          aspect={Camera.constants.Aspect.fill}
+          captureQuality={Camera.constants.CaptureQuality.medium}
+          cameraType={Camera.constants.CameraType.front}
+          model = {Camera.constants.Model.cascade}
+          onTrained = {this.onTrained}
+          onRecognized = {this.onRecognized}
+          onUntrained = {this.onUntrained}
+          onUnrecognized = {this.onUnrecognized}
         />
-        <View style={{flex: 0, flexDirection: 'row', justifyContent: 'center',}}>
+        <View style={{flex: 0, flexDirection: 'row', justifyContent: 'center'}}>
         <TouchableOpacity
             onPress={this.takePicture.bind(this)}
             style = {styles.capture}
         >
-            <Text style={{fontSize: 14}}> SHOT </Text>
+            <Text style={{fontSize: 14}}> SNAP </Text>
         </TouchableOpacity>
         <TouchableOpacity
-            onPress={this.recognizePicture.bind(this)}
+            onPress={() => this.camera.identify()}
             style = {styles.capture}
         >
-            <Text style={{fontSize: 14}}> RECOGNIZE </Text>
+            <Text style={{fontSize: 14}}> Recognize </Text>
         </TouchableOpacity>
         <TouchableOpacity
-            onPress={() => this.setState({type: this.state.type === 'back' ? 'front' : 'back',})}
+            onPress={this.clear.bind(this)}
             style = {styles.capture}
         >
-            <Text style={{fontSize: 14}}> FLIP </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-            onPress={() => this.clean()}
-            style = {styles.capture}
-        >
-            <Text style={{fontSize: 14}}> CLEAN </Text>
+            <Text style={{fontSize: 14}}> Clear </Text>
         </TouchableOpacity>
         </View>
       </View>
     );
   }
-  
-  onFaceRecognized(data) {
-    ToastAndroid.show("Recognized: " + data.name + " Distance: " + data.distance, ToastAndroid.LONG)
-  }
-  onClean(msg) {
-    this.setState({faces: []})
-    ToastAndroid.show(msg, ToastAndroid.SHORT)
-  }
-  clean() {
-    Face.Clean();
-  }
-  onCameraReady() {
-    Face.Start(Face.Detection.DEEP, (success) => {
-      ToastAndroid.show("Train initialized", ToastAndroid.SHORT)
-    }, (error) => {
-      ToastAndroid.show(error, ToastAndroid.LONG)
-    })
-  }
-
   takePicture = async function() {
     if (this.camera) {
-      const options = { width: 200, base64: true }
-      const data = await this.camera.takePictureAsync(options)
-      Face.Detect(data.base64, (detected) => {
-        ToastAndroid.show(detected, ToastAndroid.SHORT)
-        this.setState({image64: data.base64})
-        this.onFaceDetect()
-      }, (error) => {
-        ToastAndroid.show(error, ToastAndroid.SHORT)
-      })
+      try {
+        await this.camera.takePicture()
+        this.showPanel()
+      } catch(err) {
+        ToastAndroid.show(err.toString(), ToastAndroid.SHORT);
+      }
     }
-  };
-  recognizePicture = async function() {
-    if (this.camera) {
-      const options = { width: 200, base64: true };
-      const data = await this.camera.takePictureAsync(options)
-      Face.Detect(data.base64, (detected) => {
-        ToastAndroid.show(detected, ToastAndroid.SHORT)
-        Face.Identify(data.base64, (unrecognized) => {
-          ToastAndroid.show(unrecognized, ToastAndroid.SHORT)
-        })
-      }, (error) => {
-        ToastAndroid.show(error, ToastAndroid.SHORT)
-      })
-      console.log(data.uri);
+  }
+  clear() {
+    try {
+      this.camera.clear()
+      ToastAndroid.show("Cleared", ToastAndroid.SHORT);
+    } catch(err) {
+      ToastAndroid.show(err.toString(), ToastAndroid.SHORT);
     }
-  };
-  onFaceDetect() {
+  }
+  showPanel() {
     if(this.state.faces.length == 0)
-      this.newFaceDetected();
+      this.newFacePanel()
     else {
       DialogManager.show({
         title: 'Trained Faces',
@@ -140,12 +115,12 @@ export default class App extends Component {
         animationDuration: 200,
         SlideAnimation: new SlideAnimation({slideFrom: 'top'}),
         children: (
-          <DialogContent >
+          <DialogContent>
               <View>
                 <ListView dataSource = {this.state.dataSource} renderRow = {this.renderRow.bind(this)} />
               </View>
               <DialogButton text = "Close" align = 'right' onPress = {() => DialogManager.dismiss()} />
-              <DialogButton text = "New Face" align = 'right' onPress = {() => this.newFaceDetected()} />
+              <DialogButton text = "New Face" align = 'right' onPress = {() => this.newFacePanel()} />
           </DialogContent>
         ),
       }, () => {
@@ -153,7 +128,7 @@ export default class App extends Component {
       });
     }
   }
-  newFaceDetected() {
+  newFacePanel() {
     DialogManager.show({
       title: 'Train Face',
       titleAlign: 'center',
@@ -163,34 +138,34 @@ export default class App extends Component {
       children: (
         <DialogContent>
             <View>
-              <TextInput placeholder="face name" onChangeText={(Fname) => this.setState({Fname})} />
+              <TextInput placeholder="face name" onChangeText={(fname) => this.setState({fname})} />
             </View>
-          <DialogButton text = "Save" onPress= {() => this.newFaceImage()}/>
+          <DialogButton text = "Save" onPress= {() => this.faceDetails()}/>
         </DialogContent>
       ),
     }, () => {
       console.log('callback - show');
     });
   }
-  newFaceImage() {
-    const faces = [...this.state.faces, {Fname: this.state.Fname, captured: this.state.captured}]
-    const images = {image64: this.state.image64, Fname: this.state.Fname}
-    Face.Training(images, (result) => alert(result), (err) => alert(err))
+  faceDetails() {
+    const faces = [...this.state.faces, {fname: this.state.fname, captured: this.state.captured}]
+    const info = {fname: this.state.fname}
+    this.camera.train(info)
     this.setState({dataSource: this.ds.cloneWithRows(faces), faces})
     DialogManager.dismissAll()
   }
   saveCaptureImage(faceData) {
-    if(faceData.captured == 5)
+    if(faceData.captured == 2) // you can set photos limit per face
       ToastAndroid.show("More photos are not allowed", ToastAndroid.SHORT)
     else {
       const slice = this.state.faces.slice()
       slice.map((face) => {
-        if(face.Fname == faceData.Fname)
+        if(face.fname == faceData.fname)
           face.captured++
       })
       this.setState({dataSource: this.ds.cloneWithRows(slice)})
-      const images = {image64: this.state.image64, Fname: faceData.Fname}
-      Face.Training(images, (result) => alert(result), (err) => alert(err))
+      const info = {fname: faceData.fname}
+      this.camera.train(info)
     }
     DialogManager.dismiss()
   }
@@ -207,7 +182,7 @@ export default class App extends Component {
             }}>
             <Text style = {{fontSize: 16}}>{rowData.captured}</Text>
                 <View style = {{paddingLeft: 20}}>
-                  <Text style = {{fontSize: 18}}>{rowData.Fname}</Text>
+                  <Text style = {{fontSize: 18}}>{rowData.fname}</Text>
                 </View>
             </View>
           </TouchableHighlight>
@@ -220,20 +195,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'column',
-    backgroundColor: 'white'
+    backgroundColor: 'black'
   },
   preview: {
     flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center'
   },
   capture: {
     flex: 0,
-    backgroundColor: '#D7D7D7',
+    backgroundColor: '#fff',
     borderRadius: 5,
-    padding: 10,
-    paddingHorizontal: 10,
+    padding: 15,
+    paddingHorizontal: 20,
     alignSelf: 'center',
-    margin: 10
+    margin: 20
   }
 });

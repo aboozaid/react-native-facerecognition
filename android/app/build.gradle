@@ -1,7 +1,21 @@
 apply plugin: 'com.android.library'
 
+buildscript {
+    repositories {
+        jcenter()
+        google()
+        maven {
+            url 'https://maven.google.com'
+        }
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.0.0'
+    }
+}
 android {
     compileSdkVersion 26
+    buildToolsVersion "26.0.2"
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 26
@@ -9,9 +23,20 @@ android {
         versionName "1.0"
     }
 }
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://maven.google.com'
+    }
+    maven { url "https://jitpack.io" }
+    maven {
+        // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+        url "$rootDir/../node_modules/react-native/android"
+    }
+}
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:26.1.0'
-    compile project('::openCVLibrary')
-    compile 'com.facebook.react:react-native:0.20.1'
+    compile 'com.android.support:appcompat-v7:26.0.2'
+    compile project(':openCV')
+    compile ('com.facebook.react:react-native:+')
 }

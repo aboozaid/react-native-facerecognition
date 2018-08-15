@@ -10,6 +10,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import org.opencv.android.Utils;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
@@ -33,47 +34,12 @@ public class Tinydb {
     public Tinydb(Context context) {
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
-    private static boolean loadFile(Context context, String cascadeName) {
-        InputStream inp = null;
-        OutputStream out = null;
-        boolean completed = false;
-        try {
-            inp = context.getResources().getAssets().open(cascadeName);
-            File outFile = new File(context.getCacheDir(), cascadeName);
-            out = new FileOutputStream(outFile);
-
-            byte[] buffer = new byte[4096];
-            int bytesread;
-            while((bytesread = inp.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesread);
-            }
-
-            completed = true;
-            inp.close();
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            Log.i(TAG, "Unable to load cascade file" + e);
-        }
-        return completed;
-    }
-    public static CascadeClassifier loadXMLS(Context context, String cascadeName) {
-
-        CascadeClassifier classifier = null;
-
-        if(loadFile(context, cascadeName)) {
-            File cascade = new File(context.getCacheDir(), cascadeName);
-            classifier = new CascadeClassifier(cascade.getAbsolutePath());
-            Log.i(TAG, "Cascade File Loaded Successfully");
-            cascade.delete();
-        } else {
-            Log.i(TAG, "Path Direction May Be Wrong");
-        }
-        return classifier;
+    public ArrayList<String> getListString(String key) {
+        return new ArrayList<String>(Arrays.asList(TextUtils.split(preferences.getString(key, ""), "‚‗‚")));
     }
     public ArrayList<Mat> getListMat(String key){
         ArrayList<String> objStrings = getListString(key);
-        ArrayList<Mat> objects =  new ArrayList<>();
+        ArrayList<Mat> objects =  new ArrayList<Mat>();
 
         for (String jObjString : objStrings) {
             byte[] data = Base64.decode(jObjString, Base64.DEFAULT);
@@ -84,9 +50,6 @@ public class Tinydb {
             objects.add(mat);
         }
         return objects;
-    }
-    public ArrayList<String> getListString(String key) {
-        return new ArrayList<String>(Arrays.asList(TextUtils.split(preferences.getString(key, ""), "‚‗‚")));
     }
     public void putListMat(String key, ArrayList<Mat> objArray){
         checkForNullKey(key);
@@ -111,10 +74,18 @@ public class Tinydb {
         checkForNullKey(key);
         String[] myStringList = stringList.toArray(new String[stringList.size()]);
         preferences.edit().putString(key, TextUtils.join("‚‗‚", myStringList)).apply();
+
     }
     public void checkForNullKey(String key){
         if (key == null){
             throw new NullPointerException();
         }
     }
+    public boolean isCleared(String key) {
+        checkForNullKey(key);
+        if(preferences.edit().remove(key).commit())
+            return true;
+        return false;
+    }
+
 }
