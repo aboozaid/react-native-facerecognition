@@ -27,12 +27,12 @@ import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 /**
- * This class is an implementation of the Bridge View between OpenCV and Java Camera.
+ * This class is an implementation of the Bridge View between OpenCV and Java CameraCallbacks.
  * This class relays on the functionality available in base class and only implements
  * required functions:
  * connectCamera - opens Java camera and sets the PreviewCallback to be delivered.
  * disconnectCamera - closes the camera and stops preview.
- * When frame is delivered via callback from Camera - it processed via OpenCV to be
+ * When frame is delivered via callback from CameraCallbacks - it processed via OpenCV to be
  * converted to RGBA32 and then passed to the external callback for modifications if required.
  */
 
@@ -113,7 +113,7 @@ public class JavaCamera2View extends CameraBridgeViewBase {
             }
             return true;
         } catch (CameraAccessException e) {
-            Log.e(LOGTAG, "OpenCamera - Camera Access Exception", e);
+            Log.e(LOGTAG, "OpenCamera - CameraCallbacks Access Exception", e);
         } catch (IllegalArgumentException e) {
             Log.e(LOGTAG, "OpenCamera - Illegal Argument Exception", e);
         } catch (SecurityException e) {
@@ -252,7 +252,7 @@ public class JavaCamera2View extends CameraBridgeViewBase {
     boolean calcPreviewSize(final int width, final int height) {
         Log.i(LOGTAG, "calcPreviewSize: " + width + "x" + height);
         if (mCameraID == null) {
-            Log.e(LOGTAG, "Camera isn't initialized!");
+            Log.e(LOGTAG, "CameraCallbacks isn't initialized!");
             return false;
         }
         CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
@@ -282,7 +282,7 @@ public class JavaCamera2View extends CameraBridgeViewBase {
                 return true;
             }
         } catch (CameraAccessException e) {
-            Log.e(LOGTAG, "calcPreviewSize - Camera Access Exception", e);
+            Log.e(LOGTAG, "calcPreviewSize - CameraCallbacks Access Exception", e);
         } catch (IllegalArgumentException e) {
             Log.e(LOGTAG, "calcPreviewSize - Illegal Argument Exception", e);
         } catch (SecurityException e) {

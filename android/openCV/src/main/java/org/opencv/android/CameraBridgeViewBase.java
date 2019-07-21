@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is a basic class, implementing the interaction with Camera and OpenCV library.
+ * This is a basic class, implementing the interaction with CameraCallbacks and OpenCV library.
  * The main responsibility of it - is to control when camera can be enabled, process the frame,
  * call external listener to make any adjustments to the frame and then draw the resulting
  * frame to the screen.
@@ -500,7 +500,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
     /**
      * This method is invoked shall perform concrete operation to initialize the camera.
      * CONTRACT: as a result of this method variables mFrameWidth and mFrameHeight MUST be
-     * initialized with the size of the Camera frames that will be delivered to external processor.
+     * initialized with the size of the CameraCallbacks frames that will be delivered to external processor.
      * @param width - the width of this SurfaceView
      * @param height - the height of this SurfaceView
      */

@@ -55,7 +55,7 @@ public class Camera2Renderer extends CameraGLRendererBase {
     boolean cacPreviewSize(final int width, final int height) {
         Log.i(LOGTAG, "cacPreviewSize: "+width+"x"+height);
         if(mCameraID == null) {
-            Log.e(LOGTAG, "Camera isn't initialized!");
+            Log.e(LOGTAG, "CameraCallbacks isn't initialized!");
             return false;
         }
         CameraManager manager = (CameraManager) mView.getContext()
@@ -87,7 +87,7 @@ public class Camera2Renderer extends CameraGLRendererBase {
                 return true;
             }
         } catch (CameraAccessException e) {
-            Log.e(LOGTAG, "cacPreviewSize - Camera Access Exception");
+            Log.e(LOGTAG, "cacPreviewSize - CameraCallbacks Access Exception");
         } catch (IllegalArgumentException e) {
             Log.e(LOGTAG, "cacPreviewSize - Illegal Argument Exception");
         } catch (SecurityException e) {
@@ -129,7 +129,7 @@ public class Camera2Renderer extends CameraGLRendererBase {
                 manager.openCamera(mCameraID, mStateCallback, mBackgroundHandler);
             }
         } catch (CameraAccessException e) {
-            Log.e(LOGTAG, "OpenCamera - Camera Access Exception");
+            Log.e(LOGTAG, "OpenCamera - CameraCallbacks Access Exception");
         } catch (IllegalArgumentException e) {
             Log.e(LOGTAG, "OpenCamera - Illegal Argument Exception");
         } catch (SecurityException e) {

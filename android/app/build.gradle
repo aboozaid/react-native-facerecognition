@@ -14,11 +14,10 @@ buildscript {
     }
 }
 android {
-    compileSdkVersion 26
-    buildToolsVersion "26.0.2"
+    compileSdkVersion rootProject.ext.compileSdkVersion
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 26
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
     }
@@ -36,7 +35,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:26.0.2'
-    compile project(':openCV')
-    compile ('com.facebook.react:react-native:+')
+    implementation 'com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}'
+    implementation project(':openCV')
+    implementation ('com.facebook.react:react-native:+')
 }

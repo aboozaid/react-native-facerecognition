@@ -43,7 +43,7 @@ public class CameraRenderer extends CameraGLRendererBase {
                 mCamera = Camera.open();
             }
             catch (Exception e){
-                Log.e(LOGTAG, "Camera is not available (in use or does not exist): " + e.getLocalizedMessage());
+                Log.e(LOGTAG, "CameraCallbacks is not available (in use or does not exist): " + e.getLocalizedMessage());
             }
 
             if(mCamera == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
@@ -54,7 +54,7 @@ public class CameraRenderer extends CameraGLRendererBase {
                         mCamera = Camera.open(camIdx);
                         connected = true;
                     } catch (RuntimeException e) {
-                        Log.e(LOGTAG, "Camera #" + camIdx + "failed to open: " + e.getLocalizedMessage());
+                        Log.e(LOGTAG, "CameraCallbacks #" + camIdx + "failed to open: " + e.getLocalizedMessage());
                     }
                     if (connected) break;
                 }
@@ -92,7 +92,7 @@ public class CameraRenderer extends CameraGLRendererBase {
                     try {
                         mCamera = Camera.open(localCameraIndex);
                     } catch (RuntimeException e) {
-                        Log.e(LOGTAG, "Camera #" + localCameraIndex + "failed to open: " + e.getLocalizedMessage());
+                        Log.e(LOGTAG, "CameraCallbacks #" + localCameraIndex + "failed to open: " + e.getLocalizedMessage());
                     }
                 }
             }
@@ -120,7 +120,7 @@ public class CameraRenderer extends CameraGLRendererBase {
     public synchronized void setCameraPreviewSize(int width, int height) {
         Log.i(LOGTAG, "setCameraPreviewSize: "+width+"x"+height);
         if(mCamera == null) {
-            Log.e(LOGTAG, "Camera isn't initialized!");
+            Log.e(LOGTAG, "CameraCallbacks isn't initialized!");
             return;
         }
 

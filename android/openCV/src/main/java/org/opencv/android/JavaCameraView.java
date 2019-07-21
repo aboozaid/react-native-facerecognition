@@ -24,12 +24,12 @@ import java.util.List;
 import java.util.ListIterator;
 
 /**
- * This class is an implementation of the Bridge View between OpenCV and Java Camera.
+ * This class is an implementation of the Bridge View between OpenCV and Java CameraCallbacks.
  * This class relays on the functionality available in base class and only implements
  * required functions:
  * connectCamera - opens Java camera and sets the PreviewCallback to be delivered.
  * disconnectCamera - closes the camera and stops preview.
- * When frame is delivered via callback from Camera - it processed via OpenCV to be
+ * When frame is delivered via callback from CameraCallbacks - it processed via OpenCV to be
  * converted to RGBA32 and then passed to the external callback for modifications if required.
  */
 public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallback {
@@ -98,7 +98,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                     mCamera = Camera.open();
                 }
                 catch (Exception e){
-                    Log.e(TAG, "Camera is not available (in use or does not exist): " + e.getLocalizedMessage());
+                    Log.e(TAG, "CameraCallbacks is not available (in use or does not exist): " + e.getLocalizedMessage());
                 }
 
                 if(mCamera == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
@@ -109,7 +109,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                             mCamera = Camera.open(camIdx);
                             connected = true;
                         } catch (RuntimeException e) {
-                            Log.e(TAG, "Camera #" + camIdx + "failed to open: " + e.getLocalizedMessage());
+                            Log.e(TAG, "CameraCallbacks #" + camIdx + "failed to open: " + e.getLocalizedMessage());
                         }
                         if (connected) break;
                     }
@@ -147,7 +147,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                         try {
                             mCamera = Camera.open(localCameraIndex);
                         } catch (RuntimeException e) {
-                            Log.e(TAG, "Camera #" + localCameraIndex + "failed to open: " + e.getLocalizedMessage());
+                            Log.e(TAG, "CameraCallbacks #" + localCameraIndex + "failed to open: " + e.getLocalizedMessage());
                         }
                     }
                 }

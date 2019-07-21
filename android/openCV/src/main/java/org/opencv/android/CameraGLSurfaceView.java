@@ -29,7 +29,7 @@ public class CameraGLSurfaceView extends GLSurfaceView {
         public void onCameraViewStopped();
 
         /**
-         * This method is invoked when a new preview frame from Camera is ready.
+         * This method is invoked when a new preview frame from CameraCallbacks is ready.
          * @param texIn -  the OpenGL texture ID that contains frame in RGBA format
          * @param texOut - the OpenGL texture ID that can be used to store modified frame image t display
          * @param width -  the width of the frame
