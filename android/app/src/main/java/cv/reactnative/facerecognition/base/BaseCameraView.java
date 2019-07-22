@@ -101,7 +101,6 @@ public class BaseCameraView extends JavaCameraView {
                         if (getContext() != null) {
                             setCvCameraViewListener(createCvCameraViewListener());
                             enableView();
-                            callback.onCameraResume();
                         }
                     }
                     break;

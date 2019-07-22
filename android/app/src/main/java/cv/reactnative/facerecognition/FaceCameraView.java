@@ -132,13 +132,18 @@ public class FaceCameraView extends SimpleViewManager<FrameLayout> implements Li
         CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
         camera.setCameraView(cameraType);
     }
-    @ReactProp(name = "touchToFocus")
+    @ReactProp(name = "touchToFocus", defaultBoolean = false)
     public void setTouchToFocus(FrameLayout view, @Nullable Boolean touchToFocus) {
         CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
         camera.setTapToFocus(touchToFocus);
     }
+    @ReactProp(name = "dataset", defaultBoolean = true)
+    public void setDataset(FrameLayout view, @Nullable Boolean enable) {
+        CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
+        camera.setDataset(enable);
+    }
     @ReactProp(name = "model")
-    public void setTouchToFocus(FrameLayout view, @Nullable int model) {
+    public void setModelDetection(FrameLayout view, @Nullable int model) {
         CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
         camera.setModelDetection(model);
     }

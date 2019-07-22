@@ -26,10 +26,18 @@ public class Tinydb {
     private SharedPreferences preferences;
     private ArrayList<Mat> images;
     private ArrayList<String> labels;
+    private static Tinydb instance;
 
-    public Tinydb(Context context) {
+    private Tinydb(Context context) {
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
+
+    public static Tinydb getInstance(Context context) {
+        if(instance == null)
+            instance = new Tinydb(context);
+        return instance;
+    }
+
     public void initialize() {
         images = getListMat("images");
         labels = getListString("labels");
@@ -102,6 +110,8 @@ public class Tinydb {
     public boolean isCleared() {
         images.clear();
         labels.clear();
+        preferences.edit().remove("images").commit();
+        preferences.edit().remove("labels").commit();
         save();
 
         return true;

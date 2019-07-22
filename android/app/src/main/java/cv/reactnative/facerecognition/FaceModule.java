@@ -99,6 +99,7 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
 
         return constants;
     }
+
     @Override
     public String getName() {
         return Lib;
@@ -130,6 +131,7 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
             }
         });
     }
+
     @ReactMethod
     public void train(final ReadableMap info, final int viewFlag) {
         final ReactApplicationContext rctx = getReactApplicationContext();
@@ -144,6 +146,7 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
             }
         });
     }
+
     @ReactMethod
     public void recognize(final int viewFlag) {
         final ReactApplicationContext rctx = getReactApplicationContext();
@@ -157,6 +160,7 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
             }
         });
     }
+
     @ReactMethod
     public void clear(final int viewFlag, final Promise status) {
         final ReactApplicationContext rctx = getReactApplicationContext();

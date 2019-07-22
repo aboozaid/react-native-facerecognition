@@ -1,3 +1,7 @@
 android/app/src/main/jniLibs/
 android/app/build
 android/opencv/build
+android/app/src/main/assets/dataset/assem_2.jpg
+android/app/src/main/assets/dataset/assem_1.jpg
+android/app/src/main/assets/dataset/._assem_2.jpg
+android/app/src/main/assets/dataset/._assem_1.jpg

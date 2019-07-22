@@ -21,6 +21,8 @@ public interface CameraModel {
 
     void setRotateMode(boolean isLandscape);
 
+    void setDataset(boolean enable);
+
     void disableView();
 
     void setConfidence(int confidence);

@@ -54,7 +54,12 @@ public class Resources {
             return detection.UKNOWN_FACE;
     }
 
-    public static Mat improvements(final Mat image) {
+    public static void enhance(Mat photo, MatOfRect faces) {
+        cropImage(faces, photo);
+        improvements(photo);
+    }
+
+    private static Mat improvements(final Mat image) {
         Mat improve = new Mat();
         CLAHE clahe = Imgproc.createCLAHE();
 
@@ -66,7 +71,7 @@ public class Resources {
         return improve;
     }
 
-    public static Mat cropImage(final MatOfRect faces, final Mat image) {
+    private static Mat cropImage(final MatOfRect faces, final Mat image) {
         if(!faces.empty()) {
             Rect rect_crop = null;
             MatOfPoint2f points = new MatOfPoint2f();

@@ -28,7 +28,7 @@ function convertNativeProps(props) {
     }
     if (typeof props.rotateMode === 'string') {
       newProps.rotateMode = Camera.constants.RotateMode[props.rotateMode];
-    }  
+    } 
     delete newProps.onTrained;
     delete newProps.onRecognized;
     delete newProps.onUntrained;
@@ -76,6 +76,7 @@ function convertNativeProps(props) {
         PropTypes.string,
         PropTypes.number
       ]),
+      dataset: PropTypes.bool,
       touchToFocus: PropTypes.bool,
       onTrained: PropTypes.func,
       onRecognized: PropTypes.func,
@@ -91,7 +92,8 @@ function convertNativeProps(props) {
       model: CameraManager.Model.cascade,
       touchToFocus: false,
       distance: 200,
-      rotateMode: CameraManager.RotateMode.off
+      rotateMode: CameraManager.RotateMode.off,
+      dataset: false
     };
 
     _cameraRef: ?Object;

@@ -3,12 +3,17 @@ package cv.reactnative.facerecognition;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.util.Log;
 
 import com.facebook.react.bridge.ReadableMap;
 
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.MatOfRect2d;
@@ -27,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -41,7 +47,6 @@ import static org.opencv.objdetect.Objdetect.CASCADE_DO_CANNY_PRUNING;
 public class FaceRecognition extends BaseCameraView implements CameraModel {
 
     private final static String TAG = FaceRecognition.class.getName();
-    private Mat captured;
     private LBPHFRecognizer recognizer;
     protected int confidence;
     private String faceModel;
@@ -54,6 +59,8 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     private onTrained trainingCallback;
     private onRecognized recognitionCallback;
     private Mat gray;
+    private boolean datasetEnabled = false;
+    private boolean datasetLoaded = false;
 
     public interface onTrained {
         void onComplete();
@@ -77,6 +84,13 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         public void onCameraStarted() {
             faces = new MatOfRect();
             myTimer = new Timer(true);
+
+            if(datasetEnabled && !datasetLoaded) {
+                getDataset task = new getDataset(getContext());
+                task.execute();
+            }
+
+
         }
 
         @Override
@@ -104,13 +118,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         @Override
         public void onCameraResume() {
             // opencv loaded
-            recognizer = new LBPHFRecognizer(confidence);
-            storage = new Tinydb(getContext());
-            storage.initialize();
 
-            if(!storage.isEmpty()){
-                train();
-            }
         }
 
         @Override
@@ -148,9 +156,8 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
     @Override
     public int isDetected() {
-        captured = Resources.cropImage(faces, gray);
-        captured = Resources.improvements(captured);
-        int status = Resources.checkDetection(faces, captured);
+        Resources.enhance(gray, faces);
+        int status = Resources.checkDetection(faces, gray);
         return status;
     }
 
@@ -170,7 +177,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
         String name = info.getString("fname");
 
-        storage.setImage(captured);
+        storage.setImage(gray);
         storage.setLabel(name);
 
         train();
@@ -178,7 +185,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
     @Override
     public void isRecognized() {
-        String result = recognizer.recognize(captured);
+        String result = recognizer.recognize(gray);
         if(result != null) {
             recognitionCallback.onComplete(result);
         } else {
@@ -200,7 +207,17 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     @Override
     public void onResume() {
         if (getContext() == null) return;
-        loadOpenCV();
+        super.loadOpenCV();
+
+        recognizer = new LBPHFRecognizer(confidence);
+        storage = Tinydb.getInstance(getContext());
+        storage.initialize();
+
+        if(!storage.isEmpty() || datasetLoaded) {
+            train();
+        }
+
+        Log.i(TAG, "HOW MANY THIS WILL BE DISPLAYED?");
     }
 
     @Override
@@ -212,6 +229,11 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     @Override
     public void setTapToFocus(boolean tapToFocusEnabled) {
         this.tapToFocusEnabled = tapToFocusEnabled;
+    }
+
+    @Override
+    public void setDataset(boolean enable) {
+        this.datasetEnabled = enable;
     }
 
     @Override
@@ -253,7 +275,6 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         private Context context;
         private String file;
 
-
         getClassifier (Context context, String file) {
             this.context = context;
             this.file = file;
@@ -291,6 +312,64 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         protected void onPostExecute(Boolean result) {
             File file = new File(getContext().getCacheDir(), faceModel);
             classifier = new CascadeClassifier(file.getAbsolutePath());
+        }
+    }
+
+    private class getDataset extends AsyncTask<Integer, Void, Integer> {
+        private Context context;
+
+        getDataset (Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected Integer doInBackground(Integer... strings) {
+            if(context != null) {
+                InputStream inp = null;
+                AssetManager manager = context.getAssets();
+                try {
+                    String[] images = manager.list("dataset");
+                    ArrayList<String> listImages = new ArrayList<String>(Arrays.asList(images));
+
+                    for(String image : listImages) {
+                        inp = manager.open("dataset/" + image);
+                        if(inp != null) {
+                            Bitmap bitmap = BitmapFactory.decodeStream(inp);
+                            String[] exp = image.split("_");
+                            Mat photo = bitmapToMat(bitmap);
+                            classifier.detectMultiScale(photo, faces, 1.3, 6, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
+                            if(!faces.empty()) {
+                                Resources.enhance(photo, faces);
+                                storage.setImage(photo);
+                                storage.setLabel(exp[0]);
+                            }
+                        }
+                    }
+                    return listImages.size();
+
+                } catch (IOException e) {
+                    Log.i(TAG, "Unable to load cascade file" + e);
+                }
+            }
+
+            Log.d(TAG, "seems that context is null");
+            return 0;
+        }
+
+        private Mat bitmapToMat(Bitmap bitmap) {
+            Mat output = new Mat();
+            Utils.bitmapToMat(bitmap, output);
+            Imgproc.cvtColor(output, output, Imgproc.COLOR_BGR2GRAY);
+            return output;
+        }
+
+        @Override
+        protected void onPostExecute(Integer result) {
+            if(result > 0) {
+                train();
+                datasetLoaded = true;
+            }
+
         }
     }
 }
