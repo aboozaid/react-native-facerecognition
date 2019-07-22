@@ -26,8 +26,8 @@ import com.facebook.react.uimanager.events.RCTEventEmitter;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
-import assem.base.CameraModel;
-import assem.base.CameraSettings;
+import cv.reactnative.facerecognition.base.CameraModel;
+import cv.reactnative.facerecognition.base.CameraSettings;
 import cv.reactnative.R;
 import cv.reactnative.facerecognition.utils.Resources;
 
@@ -42,7 +42,6 @@ public class FaceCameraView extends SimpleViewManager<FrameLayout> implements Li
     private static final String BCAST_CONFIGCHANGED = "android.intent.action.CONFIGURATION_CHANGED";
     private WeakReference<ViewGroup> layoutRef;
     private BroadcastReceiver receiver;
-    private FaceRecognition recog;
 
     public FaceCameraView(ReactApplicationContext reactContext) {
         super();
@@ -58,13 +57,13 @@ public class FaceCameraView extends SimpleViewManager<FrameLayout> implements Li
     protected FrameLayout createViewInstance(final ThemedReactContext reactContext) {
         // onCreate in android
 
+
         LayoutInflater inflater = LayoutInflater.from(reactContext);
         final FrameLayout preview = (FrameLayout) inflater.inflate(R.layout.camera_view, null);
         layoutRef = new WeakReference<ViewGroup>(preview);
-        recog = FaceRecognition.getInstance(reactContext);
-        //CameraModel camera = (CameraModel) preview.findViewById(R.id.camera_view);
+        CameraModel camera = (CameraModel) preview.findViewById(R.id.camera_view);
 
-        recog.setTrainingCallback(new RecognitionMethods.onTrained() {
+        camera.setTrainingCallback(new RecognitionMethods.onTrained() {
             @Override
             public void onComplete() {
                 ReactContext context = reactContext;
@@ -79,7 +78,7 @@ public class FaceCameraView extends SimpleViewManager<FrameLayout> implements Li
                 context.getJSModule(RCTEventEmitter.class).receiveEvent(preview.getId(),"TrainUncompleted", event);
             }
         });
-        recog.setRecognitionCallback(new RecognitionMethods.onRecognized() {
+        camera.setRecognitionCallback(new RecognitionMethods.onRecognized() {
             @Override
             public void onComplete(String result) {
                 ReactContext context = reactContext;
@@ -140,20 +139,19 @@ public class FaceCameraView extends SimpleViewManager<FrameLayout> implements Li
     }
     @ReactProp(name = "model")
     public void setTouchToFocus(FrameLayout view, @Nullable int model) {
-        /*CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
-        camera.setModelDetection(model);*/
-        recog.setModelDetection(model);
+        CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
+        camera.setModelDetection(model);
     }
     @ReactProp(name = "distance")
     public void setDistance(FrameLayout view, @Nullable int confidence) {
-        /*CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
-        camera.setConfidence(confidence);*/
-        recog.setConfidence(confidence);
+        CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
+        camera.setConfidence(confidence);
     }
     @ReactProp(name = "rotateMode")
     public void setRotateMode(FrameLayout view, @Nullable int rotateMode) {
         CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
         camera.setRotateMode(rotateMode == CameraSettings.CameraRotateModeOn);
+
     }
 
 

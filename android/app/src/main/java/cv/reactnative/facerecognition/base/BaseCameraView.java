@@ -1,7 +1,10 @@
-package assem.base;
+package cv.reactnative.facerecognition.base;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -19,14 +22,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-public class BaseCameraView extends JavaCameraView{
+import cv.reactnative.facerecognition.utils.Resources;
+
+public class BaseCameraView extends JavaCameraView {
     private static String TAG = "FaceCameraManage";
     private Camera.Size highResolution;
     private Camera.Size mediumResolution;
     private Camera.Size lowResolution;
     private int quality = Quality.MEDIUM;
     private Mat rgba, gray;
-    public CameraCallbacks callback;
+    protected CameraCallbacks callback;
     private int rotation;
     private boolean clockwise = true;
     protected boolean torchEnabled = false;
@@ -40,6 +45,14 @@ public class BaseCameraView extends JavaCameraView{
 
     public BaseCameraView(Context context, int cameraId) {
         super(context, cameraId);
+    }
+
+    public BaseCameraView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    public void getModel(CameraCallbacks callback) {
+        this.callback = callback;
     }
 
     private CvCameraViewListener2 createCvCameraViewListener() {
@@ -284,8 +297,11 @@ public class BaseCameraView extends JavaCameraView{
     public void setRotateMode(boolean isLandscape) {
         Context context = getContext();
         if (context == null) return;
-
-        callback.onCameraRotate(isLandscape, context);
+        Activity activity = Resources.scanForActivity(context);
+        if (activity == null) return;
+        activity.setRequestedOrientation(isLandscape
+                ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     }
 
     @Override

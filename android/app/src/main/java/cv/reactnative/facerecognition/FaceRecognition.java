@@ -3,6 +3,7 @@ package cv.reactnative.facerecognition;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.util.AttributeSet;
 
 import com.facebook.react.bridge.ReadableMap;
 
@@ -18,24 +19,24 @@ import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.tracking.MultiTracker;
 import org.opencv.tracking.TrackerMedianFlow;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import assem.base.BaseModelFactory;
-import assem.base.CameraCallbacks;
-import assem.base.Factory;
+import cv.reactnative.facerecognition.base.BaseCameraView;
+import cv.reactnative.facerecognition.base.CameraCallbacks;
+import cv.reactnative.facerecognition.base.CameraModel;
+import cv.reactnative.facerecognition.recognizer.LBPHFRecognizer;
 import cv.reactnative.facerecognition.utils.Resources;
 
 import static org.opencv.objdetect.Objdetect.CASCADE_DO_CANNY_PRUNING;
 
-public class FaceRecognition {
-    private BaseModelFactory factory;
-    private Factory face;
-    private ArrayList<Mat> images;
-    private ArrayList<String> labels;
+public class FaceRecognition extends BaseCameraView implements CameraModel {
+
+
     private Mat captured;
-    private RecognitionMethods recognition;
+    private LBPHFRecognizer recognizer;
     protected int confidence;
     private String faceModel;
     private Tinydb storage;
@@ -46,29 +47,22 @@ public class FaceRecognition {
     private Timer myTimer = new Timer(true);
     private RecognitionMethods.onTrained callback;
     private RecognitionMethods.onRecognized reconitionCallback;
-    private static FaceRecognition instance;
+    private Mat gray;
 
-    private FaceRecognition(Context context) {
-        factory = new BaseModelFactory(context);
-        face = factory.getModel("FACEMODEL");
+
+    public FaceRecognition(Context context, AttributeSet attrs) {
+        super(context, attrs);
         storage = new Tinydb(context);
-
-        face.getModel(camera);
+        getModel(camera);
     }
 
-    static FaceRecognition getInstance(Context context) {
-        if(instance == null)
-            instance = new FaceRecognition(context);
-        return instance;
-    }
-
-    public void setTrainingCallback(RecognitionMethods.onTrained callback) {
-        this.callback = callback;
-    }
-
-    public void setRecognitionCallback(RecognitionMethods.onRecognized callback) {
-        this.reconitionCallback = callback;
-    }
+    private AsyncTasks.loadFiles.Callback fileLoaded = new AsyncTasks.loadFiles.Callback() {
+        @Override
+        public void onFileLoadedComplete(boolean result) {
+            File file = new File(getContext().getCacheDir(), faceModel);
+            classifier = new CascadeClassifier(file.getAbsolutePath());
+        }
+    };
 
     private CameraCallbacks camera = new CameraCallbacks() {
         @Override
@@ -84,6 +78,7 @@ public class FaceRecognition {
         @Override
         public void onCameraFrame(Mat rgba, Mat gray) {
 
+            FaceRecognition.this.gray = gray;
             if(classifier != null) {
                 if(tracker != null && tracker.update(gray, trackerPoints)) {
                     Rect2d[] facePoints = trackerPoints.toArray();
@@ -100,30 +95,24 @@ public class FaceRecognition {
         @Override
         public void onCameraResume() {
             // opencv loaded
-            recognition = new RecognitionMethods(confidence);
-            images = storage.getListMat("images");
-            labels = storage.getListString("labels");
+            recognizer = new LBPHFRecognizer(confidence);
+            storage.initialize();
 
-            if(!images.isEmpty()){
-                reTreain();
+            if(!storage.isEmpty()){
+                train();
             }
         }
 
         @Override
         public void onCameraPause() {
             // view disabled
-        }
-
-        @Override
-        public void onCameraRotate(boolean isLandscape, Context context) {
-            Activity activity = Resources.scanForActivity(context);
-            if (activity == null) return;
-            activity.setRequestedOrientation(isLandscape
-                    ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                    : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            if(!storage.isEmpty()) {
+                storage.save();
+            }
         }
     };
 
+    @Override
     public void setModelDetection(int model) {
         switch(model) {
             case 0:
@@ -133,37 +122,45 @@ public class FaceRecognition {
                 faceModel = "lbp.xml";
                 break;
         }
+
+        AsyncTasks.loadFiles task = new AsyncTasks.loadFiles(getContext(), faceModel, fileLoaded);
+        task.execute();
     }
 
+    @Override
+    public void setConfidence(int confidence) {
+        this.confidence = confidence;
+    }
+
+
+    @Override
     public int isDetected() {
-        captured = ReactMethods.getInstance().cropImage(faces, gray);
-        captured = ReactMethods.getInstance().improvements(captured);
-        int status = ReactMethods.getInstance().checkDetection(faces, captured);
+        captured = Resources.cropImage(faces, gray);
+        captured = Resources.improvements(captured);
+        int status = Resources.checkDetection(faces, captured);
         return status;
     }
 
+    @Override
     public boolean isCleared() {
-        if(storage.isCleared("images") && storage.isCleared("labels"))
-        {
-            images.clear();
-            labels.clear();
-            reTreain();
-            return true;
-        }
-        return false;
+        boolean cleared = storage.isCleared();
+        train();
+        return cleared;
     }
 
-    public void isTrained(final ReadableMap info) {
+    @Override
+    public void toTrain(final ReadableMap info) {
         if(!info.hasKey("fname")) callback.onFail("face name is incorrect");
 
         String name = info.getString("fname");
 
-        images.add(captured);
-        labels.add(name);
+        storage.setImage(captured);
+        storage.setLabel(name);
 
-        reTreain();
+        train();
     }
 
+    @Override
     public void isRecognized() {
         switch(isDetected()) {
             case 0:
@@ -189,22 +186,39 @@ public class FaceRecognition {
         });
     }
 
-    private void reTreain() {
-        recognition.isTrained(images, labels, new RecognitionMethods.onTrained() {
-            @Override
-            public void onComplete() {
-                callback.onComplete();
-            }
-
-            @Override
-            public void onFail(String err) {
-                callback.onFail(err);
-            }
-        });
+    private void train() {
+        if(recognizer.train(storage.getListMat("images"), storage.getListString("labels")))
+            callback.onComplete();
+        else
+            callback.onFail("Trained failed");
     }
 
-    public void setConfidence(int confidence) {
-        this.confidence = confidence;
+
+    @Override
+    public void onResume() {
+        if (getContext() == null) return;
+        loadOpenCV();
+    }
+
+    @Override
+    public void setTorchMode(boolean enabled) {
+        this.torchEnabled = enabled;
+        super.setFlashMode();
+    }
+
+    @Override
+    public void setTapToFocus(boolean tapToFocusEnabled) {
+        this.tapToFocusEnabled = tapToFocusEnabled;
+    }
+
+    @Override
+    public void setTrainingCallback(RecognitionMethods.onTrained callback) {
+        this.callback = callback;
+    }
+
+    @Override
+    public void setRecognitionCallback(RecognitionMethods.onRecognized callback) {
+        this.reconitionCallback = callback;
     }
 
     private class trackFace extends TimerTask {

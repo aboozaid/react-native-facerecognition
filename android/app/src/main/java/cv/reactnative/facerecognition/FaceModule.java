@@ -17,9 +17,10 @@ import com.facebook.react.uimanager.UIManagerModule;
 import java.util.HashMap;
 import java.util.Map;
 
-import assem.base.CameraModel;
-import assem.base.CameraSettings;
+import cv.reactnative.facerecognition.base.CameraModel;
+import cv.reactnative.facerecognition.base.CameraSettings;
 import cv.reactnative.R;
+import cv.reactnative.facerecognition.utils.Resources;
 
 
 /**
@@ -34,7 +35,6 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
     public FaceModule(ReactApplicationContext reactContext) {
         super(reactContext);
         reactContext.addLifecycleEventListener(this);
-        recog = FaceRecognition.getInstance(reactContext);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
         rotateModeMap.putInt("off", CameraSettings.CameraRotateModeOff);
         rotateModeMap.putInt("on", CameraSettings.CameraRotateModeOn);
 
-        constants.put("CameraModel", module);
+        constants.put("Model", module);
         constants.put("Aspect", aspectMap);
         constants.put("CaptureQuality", captureQualityMap);
         constants.put("TorchMode", torchModeMap);
@@ -105,26 +105,26 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
     }
 
     @ReactMethod
-    public void detection(final int viewFlag,final Promise errorCallback) {
+    public void detection(final int viewFlag,final Promise promise) {
         final ReactApplicationContext rctx = getReactApplicationContext();
         UIManagerModule uiManager = rctx.getNativeModule(UIManagerModule.class);
         uiManager.addUIBlock(new UIBlock() {
             @Override
             public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
                 final FrameLayout view = (FrameLayout) nativeViewHierarchyManager.resolveView(viewFlag);
-                //final SettingsCamera camera = (SettingsCamera) view.findViewById(R.id.camera_view);
-                switch(recog.isDetected()) {
-                    case 0:
-                        errorCallback.reject("Error", "Detection has timed out");
+                final CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
+                switch(camera.isDetected()) {
+                    case Resources.detection.UKNOWN_FACE:
+                        promise.reject("UKNOWN_FACE", "Couldn't find any face");
                         break;
-                    case 1:
-                        errorCallback.reject("Error", "Photo is blurred. Snap new one!");
+                    case Resources.detection.BLURRED_IMAGE:
+                        promise.reject("BLURRED_IMAGE", "Photo is blurred. Snap new one!");
                         break;
-                    case 2:
-                        errorCallback.reject("Error", "Multiple faces detection is not supported!");
+                    case Resources.detection.MULTIPLE_FACES:
+                        promise.reject("MULTIPLE_FACES", "Multiple faces detection is not supported");
                         break;
                     default:
-                        errorCallback.resolve(null);
+                        promise.resolve(null);
                         break;
                 }
             }
@@ -138,8 +138,8 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
             @Override
             public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
                 final FrameLayout view = (FrameLayout) nativeViewHierarchyManager.resolveView(viewFlag);
-                //final CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
-                recog.isTrained(info);
+                final CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
+                camera.toTrain(info);
             }
         });
     }
@@ -151,8 +151,8 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
             @Override
             public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
                 final FrameLayout view = (FrameLayout) nativeViewHierarchyManager.resolveView(viewFlag);
-                //final SettingsCamera camera = (SettingsCamera) view.findViewById(R.id.camera_view);
-                recog.isRecognized();
+                final CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
+                camera.isRecognized();
             }
         });
     }
@@ -164,8 +164,8 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
             @Override
             public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
                 final FrameLayout view = (FrameLayout) nativeViewHierarchyManager.resolveView(viewFlag);
-                //final SettingsCamera camera = (SettingsCamera) view.findViewById(R.id.camera_view);
-                if(recog.isCleared())
+                final CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
+                if(camera.isCleared())
                     status.resolve(null);
                 else
                     status.reject("Error", "Uncleared");

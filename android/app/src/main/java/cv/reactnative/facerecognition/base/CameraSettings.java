@@ -1,4 +1,4 @@
-package assem.base;
+package cv.reactnative.facerecognition.base;
 
 public interface CameraSettings {
     // aspects

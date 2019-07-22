@@ -1,4 +1,4 @@
-package assem.base;
+package cv.reactnative.facerecognition.base;
 
 import android.content.Context;
 
@@ -10,5 +10,4 @@ public interface CameraCallbacks {
     void onCameraFrame(Mat rgba, Mat gray);
     void onCameraResume();
     void onCameraPause();
-    void onCameraRotate(boolean isLandscape, Context context);
 }

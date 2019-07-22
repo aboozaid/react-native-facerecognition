@@ -24,13 +24,13 @@ public class RecognitionMethods {
         recognizer = LBPHFaceRecognizer.create(3, 8, 8, 8, this.maxConfidence);
     }
 
-    interface onTrained {
+    public interface onTrained {
         void onComplete();
 
         void onFail(String err);
     }
 
-    interface onRecognized {
+    public interface onRecognized {
         void onComplete(String result);
 
         void onFail(String err);

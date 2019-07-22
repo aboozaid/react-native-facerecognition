@@ -23,8 +23,19 @@ import java.util.Arrays;
 public class Tinydb {
     private static String TAG = Tinydb.class.getSimpleName();
     private SharedPreferences preferences;
+    private ArrayList<Mat> images;
+    private ArrayList<String> labels;
+
     public Tinydb(Context context) {
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
+    }
+    public void initialize() {
+        images = getListMat("images");
+        labels = getListString("labels");
+    }
+    public void save() {
+        putListMat("images", images);
+        putListString("labels", labels);
     }
     public ArrayList<String> getListString(String key) {
         return new ArrayList<String>(Arrays.asList(TextUtils.split(preferences.getString(key, ""), "‚‗‚")));
@@ -68,15 +79,25 @@ public class Tinydb {
         preferences.edit().putString(key, TextUtils.join("‚‗‚", myStringList)).apply();
 
     }
+    public void setImage(Mat image) {
+        images.add(image);
+    }
+    public void setLabel(String label) {
+        labels.add(label);
+    }
+    public boolean isEmpty() { return images.isEmpty(); }
     public void checkForNullKey(String key){
         if (key == null){
             throw new NullPointerException();
         }
     }
-    public boolean isCleared(String key) {
-        checkForNullKey(key);
-        if(preferences.edit().remove(key).commit())
-            return true;
+    public boolean isCleared() {
+        String[] keys = {"images", "labels"};
+        for(int i=0; i<keys.length; i++){
+            checkForNullKey(keys[i]);
+            if(!preferences.edit().remove(keys[i]).commit())
+                return false;
+        }
         return false;
     }
 
