@@ -154,8 +154,10 @@ function convertNativeProps(props) {
     train(info?: DetectOption) {
        CameraManager.train(info, this._cameraHandle);
     }
-    identify() {
-      CameraManager.recognize(this._cameraHandle);
+    async identify() {
+      return await CameraManager.detection(this._cameraHandle).then(() => {
+        CameraManager.recognize(this._cameraHandle);
+      });
     }
     clear() {
       CameraManager.clear(this._cameraHandle);

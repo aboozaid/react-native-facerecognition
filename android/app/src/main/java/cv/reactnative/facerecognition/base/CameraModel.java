@@ -3,7 +3,7 @@ package cv.reactnative.facerecognition.base;
 
 import com.facebook.react.bridge.ReadableMap;
 
-import cv.reactnative.facerecognition.RecognitionMethods;
+import cv.reactnative.facerecognition.FaceRecognition;
 
 public interface CameraModel {
 
@@ -35,8 +35,8 @@ public interface CameraModel {
 
     void isRecognized();
 
-    void setTrainingCallback(RecognitionMethods.onTrained callback);
+    void setTrainingCallback(FaceRecognition.onTrained callback);
 
-    void setRecognitionCallback(RecognitionMethods.onRecognized callback);
+    void setRecognitionCallback(FaceRecognition.onRecognized callback);
 
 }

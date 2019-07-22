@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -55,7 +56,6 @@ public class Tinydb {
         return objects;
     }
     public void putListMat(String key, ArrayList<Mat> objArray){
-        checkForNullKey(key);
         ArrayList<String> objStrings = new ArrayList<>();
         Bitmap bmp = null;
         ByteArrayOutputStream baos = null;
@@ -74,7 +74,6 @@ public class Tinydb {
         putListString(key, objStrings);
     }
     public void putListString(String key, ArrayList<String> stringList) {
-        checkForNullKey(key);
         String[] myStringList = stringList.toArray(new String[stringList.size()]);
         preferences.edit().putString(key, TextUtils.join("‚‗‚", myStringList)).apply();
 
@@ -85,20 +84,27 @@ public class Tinydb {
     public void setLabel(String label) {
         labels.add(label);
     }
-    public boolean isEmpty() { return images.isEmpty(); }
-    public void checkForNullKey(String key){
+    public ArrayList<Mat> getImages() {
+        return images;
+    }
+    public ArrayList<String> getLabels() {
+        return labels;
+    }
+    public boolean isEmpty() {
+        return images.isEmpty();
+    }
+    /*public void checkForNullKey(String key){
         if (key == null){
             throw new NullPointerException();
         }
-    }
+    }*/
+
     public boolean isCleared() {
-        String[] keys = {"images", "labels"};
-        for(int i=0; i<keys.length; i++){
-            checkForNullKey(keys[i]);
-            if(!preferences.edit().remove(keys[i]).commit())
-                return false;
-        }
-        return false;
+        images.clear();
+        labels.clear();
+        save();
+
+        return true;
     }
 
 }

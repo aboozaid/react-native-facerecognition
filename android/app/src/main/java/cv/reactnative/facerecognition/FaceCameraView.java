@@ -63,7 +63,7 @@ public class FaceCameraView extends SimpleViewManager<FrameLayout> implements Li
         layoutRef = new WeakReference<ViewGroup>(preview);
         CameraModel camera = (CameraModel) preview.findViewById(R.id.camera_view);
 
-        camera.setTrainingCallback(new RecognitionMethods.onTrained() {
+        camera.setTrainingCallback(new FaceRecognition.onTrained() {
             @Override
             public void onComplete() {
                 ReactContext context = reactContext;
@@ -78,7 +78,7 @@ public class FaceCameraView extends SimpleViewManager<FrameLayout> implements Li
                 context.getJSModule(RCTEventEmitter.class).receiveEvent(preview.getId(),"TrainUncompleted", event);
             }
         });
-        camera.setRecognitionCallback(new RecognitionMethods.onRecognized() {
+        camera.setRecognitionCallback(new FaceRecognition.onRecognized() {
             @Override
             public void onComplete(String result) {
                 ReactContext context = reactContext;

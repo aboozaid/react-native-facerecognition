@@ -3,7 +3,9 @@ package cv.reactnative.facerecognition;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.os.AsyncTask;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import com.facebook.react.bridge.ReadableMap;
 
@@ -20,6 +22,10 @@ import org.opencv.tracking.MultiTracker;
 import org.opencv.tracking.TrackerMedianFlow;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -34,7 +40,7 @@ import static org.opencv.objdetect.Objdetect.CASCADE_DO_CANNY_PRUNING;
 
 public class FaceRecognition extends BaseCameraView implements CameraModel {
 
-
+    private final static String TAG = FaceRecognition.class.getName();
     private Mat captured;
     private LBPHFRecognizer recognizer;
     protected int confidence;
@@ -45,29 +51,32 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     private MultiTracker tracker;
     private MatOfRect2d trackerPoints;
     private Timer myTimer = new Timer(true);
-    private RecognitionMethods.onTrained callback;
-    private RecognitionMethods.onRecognized reconitionCallback;
+    private onTrained trainingCallback;
+    private onRecognized recognitionCallback;
     private Mat gray;
 
+    public interface onTrained {
+        void onComplete();
+
+        void onFail(String err);
+    }
+
+    public interface onRecognized {
+        void onComplete(String result);
+
+        void onFail(String err);
+    }
 
     public FaceRecognition(Context context, AttributeSet attrs) {
         super(context, attrs);
-        storage = new Tinydb(context);
         getModel(camera);
     }
-
-    private AsyncTasks.loadFiles.Callback fileLoaded = new AsyncTasks.loadFiles.Callback() {
-        @Override
-        public void onFileLoadedComplete(boolean result) {
-            File file = new File(getContext().getCacheDir(), faceModel);
-            classifier = new CascadeClassifier(file.getAbsolutePath());
-        }
-    };
 
     private CameraCallbacks camera = new CameraCallbacks() {
         @Override
         public void onCameraStarted() {
             faces = new MatOfRect();
+            myTimer = new Timer(true);
         }
 
         @Override
@@ -96,6 +105,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         public void onCameraResume() {
             // opencv loaded
             recognizer = new LBPHFRecognizer(confidence);
+            storage = new Tinydb(getContext());
             storage.initialize();
 
             if(!storage.isEmpty()){
@@ -106,8 +116,11 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         @Override
         public void onCameraPause() {
             // view disabled
-            if(!storage.isEmpty()) {
+            if(storage != null && !storage.isEmpty()) {
                 storage.save();
+            }
+            if(myTimer != null){
+                myTimer.cancel();
             }
         }
     };
@@ -123,7 +136,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
                 break;
         }
 
-        AsyncTasks.loadFiles task = new AsyncTasks.loadFiles(getContext(), faceModel, fileLoaded);
+        getClassifier task = new getClassifier(getContext(), faceModel);
         task.execute();
     }
 
@@ -150,7 +163,10 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
     @Override
     public void toTrain(final ReadableMap info) {
-        if(!info.hasKey("fname")) callback.onFail("face name is incorrect");
+        if(!info.hasKey("fname")) {
+            trainingCallback.onFail("Unable to find the face name");
+            return;
+        }
 
         String name = info.getString("fname");
 
@@ -162,35 +178,22 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
     @Override
     public void isRecognized() {
-        switch(isDetected()) {
-            case 0:
-                reconitionCallback.onFail("Detection has timed out");
-                return;
-            case 1:
-                reconitionCallback.onFail("Photo is blurred. Snap new one!");
-                return;
-            case 2:
-                reconitionCallback.onFail("Multiple faces detection is not supported!");
-                return;
+        String result = recognizer.recognize(captured);
+        if(result != null) {
+            recognitionCallback.onComplete(result);
+        } else {
+            if(!storage.isEmpty())
+                recognitionCallback.onFail("UNRECOGNIZED");
+            else
+                recognitionCallback.onFail("EMPTY");
         }
-
-        recognition.isRecognized(captured, new RecognitionMethods.onRecognized() {
-            @Override
-            public void onComplete(String result) {
-                reconitionCallback.onComplete(result);
-            }
-            @Override
-            public void onFail(String err) {
-                reconitionCallback.onFail(err);
-            }
-        });
     }
 
     private void train() {
-        if(recognizer.train(storage.getListMat("images"), storage.getListString("labels")))
-            callback.onComplete();
+        if(recognizer.train(storage.getImages(), storage.getLabels()))
+            trainingCallback.onComplete();
         else
-            callback.onFail("Trained failed");
+            trainingCallback.onFail("Trained failed");
     }
 
 
@@ -212,13 +215,13 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     }
 
     @Override
-    public void setTrainingCallback(RecognitionMethods.onTrained callback) {
-        this.callback = callback;
+    public void setTrainingCallback(onTrained callback) {
+        this.trainingCallback = callback;
     }
 
     @Override
-    public void setRecognitionCallback(RecognitionMethods.onRecognized callback) {
-        this.reconitionCallback = callback;
+    public void setRecognitionCallback(onRecognized callback) {
+        this.recognitionCallback = callback;
     }
 
     private class trackFace extends TimerTask {
@@ -243,6 +246,51 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
                 }
                 trackerPoints.fromArray(trackerArr);
             }
+        }
+    }
+
+    private class getClassifier extends AsyncTask<Void, Void, Boolean> {
+        private Context context;
+        private String file;
+
+
+        getClassifier (Context context, String file) {
+            this.context = context;
+            this.file = file;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... strings) {
+            if(context != null) {
+                InputStream inp = null;
+                OutputStream out = null;
+                try {
+                    inp = context.getResources().getAssets().open(file);
+                    File outFile = new File(context.getCacheDir(), file);
+                    out = new FileOutputStream(outFile);
+
+                    byte[] buffer = new byte[4096];
+                    int bytesread;
+                    while ((bytesread = inp.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesread);
+                    }
+
+                    inp.close();
+                    out.flush();
+                    out.close();
+                    return true;
+                } catch (IOException e) {
+                    Log.i(TAG, "Unable to load cascade file" + e);
+                }
+            }
+            Log.d(TAG, "seems that context is null");
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            File file = new File(getContext().getCacheDir(), faceModel);
+            classifier = new CascadeClassifier(file.getAbsolutePath());
         }
     }
 }

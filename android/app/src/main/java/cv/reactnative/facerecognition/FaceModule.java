@@ -131,7 +131,7 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
         });
     }
     @ReactMethod
-    public void train(final ReadableMap info,final int viewFlag) {
+    public void train(final ReadableMap info, final int viewFlag) {
         final ReactApplicationContext rctx = getReactApplicationContext();
         UIManagerModule uiManager = rctx.getNativeModule(UIManagerModule.class);
         uiManager.addUIBlock(new UIBlock() {
@@ -139,6 +139,7 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
             public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
                 final FrameLayout view = (FrameLayout) nativeViewHierarchyManager.resolveView(viewFlag);
                 final CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
+
                 camera.toTrain(info);
             }
         });

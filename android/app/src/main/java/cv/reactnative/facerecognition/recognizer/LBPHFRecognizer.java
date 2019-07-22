@@ -15,6 +15,12 @@ public class LBPHFRecognizer {
     private FaceRecognizer recognizer;
     private String[] uniqueLabels;
 
+    public interface recognition {
+        int ON_RECOGNIZED = 0;
+        int ON_UNRECOGNIZED = 1;
+        int ON_ERROR = 2;
+    }
+
     public LBPHFRecognizer(int confidence) {
         this.confidence = confidence;
         recognizer = LBPHFaceRecognizer.create(3, 8, 8, 8, confidence);
@@ -55,7 +61,18 @@ public class LBPHFRecognizer {
         }
     }
 
-    public void recognize() {
-
+    public String recognize(Mat face) {
+        try {
+            int label[] = new int[1];
+            double confidence[] = new double[1];
+            recognizer.predict(face, label, confidence);
+            if (label[0] != -1 && (int)confidence[0] < this.confidence*0.6) {
+                return uniqueLabels[label[0] - 1] + " " + (int) confidence[0];
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
