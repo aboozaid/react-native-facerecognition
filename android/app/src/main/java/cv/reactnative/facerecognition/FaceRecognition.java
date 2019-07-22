@@ -220,16 +220,6 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         Log.i(TAG, "HOW MANY THIS WILL BE DISPLAYED?");
     }
 
-    @Override
-    public void setTorchMode(boolean enabled) {
-        this.torchEnabled = enabled;
-        super.setFlashMode();
-    }
-
-    @Override
-    public void setTapToFocus(boolean tapToFocusEnabled) {
-        this.tapToFocusEnabled = tapToFocusEnabled;
-    }
 
     @Override
     public void setDataset(boolean enable) {
@@ -254,7 +244,8 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         }
         @Override
         public void run() {
-            classifier.detectMultiScale(gray, faces, 1.3, 6, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
+            //classifier.detectMultiScale(gray, faces, 1.7, 5, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
+            classifier.detectMultiScale(gray, faces, 1.4, 5, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
             if (!faces.empty()) {
                 Rect[] facesArray = faces.toArray();
                 Rect2d[] trackerArr = new Rect2d[facesArray.length];
@@ -337,7 +328,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
                             Bitmap bitmap = BitmapFactory.decodeStream(inp);
                             String[] exp = image.split("_");
                             Mat photo = bitmapToMat(bitmap);
-                            classifier.detectMultiScale(photo, faces, 1.3, 6, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
+                            classifier.detectMultiScale(photo, faces, 1.4, 5, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
                             if(!faces.empty()) {
                                 Resources.enhance(photo, faces);
                                 storage.setImage(photo);

@@ -80,7 +80,7 @@ public class BaseCameraView extends JavaCameraView {
             public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
                 rgba = inputFrame.rgba();
 
-                applyOrientation(rgba, clockwise, rotation);
+                applyOrientation(rgba, clockwise , rotation);
                 Imgproc.cvtColor(rgba, gray, Imgproc.COLOR_RGB2GRAY);
 
                 callback.onCameraFrame(rgba, gray);
@@ -136,6 +136,13 @@ public class BaseCameraView extends JavaCameraView {
             Mat rgbaT2 = rgba.t();
             Core.flip(rgba.t(), rgba, clockwise ? 1 : -1);
             rgbaT2.release();
+        } else if(this.mCameraIndex == 98) {
+            Mat rgbaT = rgba.t();
+            Core.flip(rgba.t(), rgba,  1);
+            rgbaT.release();
+            Mat rgbaT2 = rgba.t();
+            Core.flip(rgba.t(), rgba,  -1);
+            rgbaT2.release();
         }
     }
 
@@ -180,6 +187,15 @@ public class BaseCameraView extends JavaCameraView {
         mMaxHeight = resolution.height;
         mMaxWidth = resolution.width;
         connectCamera(getWidth(), getHeight());
+    }
+
+    public void setTapToFocus(boolean tapToFocusEnabled) {
+        this.tapToFocusEnabled = tapToFocusEnabled;
+    }
+
+    public void setTorchMode(boolean enabled) {
+        this.torchEnabled = enabled;
+        setFlashMode();
     }
 
     protected void setFlashMode() {
