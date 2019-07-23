@@ -1,6 +1,7 @@
 package cv.reactnative.facerecognition.base;
 
 
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReadableMap;
 
 import cv.reactnative.facerecognition.FaceRecognition;
@@ -29,7 +30,7 @@ public interface CameraModel {
 
     void setModelDetection(int model);
 
-    int isDetected();
+    void isDetected(Promise promise);
 
     boolean isCleared();
 

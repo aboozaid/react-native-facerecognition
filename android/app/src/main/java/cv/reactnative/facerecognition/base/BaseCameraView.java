@@ -29,7 +29,7 @@ public class BaseCameraView extends JavaCameraView {
     private Camera.Size highResolution;
     private Camera.Size mediumResolution;
     private Camera.Size lowResolution;
-    private int quality = Quality.MEDIUM;
+    protected int quality = Quality.MEDIUM;
     private Mat rgba, gray;
     protected CameraCallbacks callback;
     private int rotation;

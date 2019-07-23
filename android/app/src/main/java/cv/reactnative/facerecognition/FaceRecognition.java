@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.util.Log;
 
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReadableMap;
 
 import org.opencv.android.Utils;
@@ -24,6 +25,7 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.tracking.MultiTracker;
+import org.opencv.tracking.Tracker;
 import org.opencv.tracking.TrackerMedianFlow;
 
 import java.io.File;
@@ -53,8 +55,8 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     private Tinydb storage;
     private MatOfRect faces;
     private CascadeClassifier classifier;
-    private MultiTracker tracker;
-    private MatOfRect2d trackerPoints;
+    private Tracker tracker;
+    private Rect2d trackerPoints;
     private Timer myTimer = new Timer(true);
     private onTrained trainingCallback;
     private onRecognized recognitionCallback;
@@ -90,6 +92,8 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
                 task.execute();
             }
 
+            myTimer.scheduleAtFixedRate(new trackFace(false, null), 0, 3*1000);
+
 
         }
 
@@ -104,13 +108,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
             FaceRecognition.this.gray = gray;
             if(classifier != null) {
                 if(tracker != null && tracker.update(gray, trackerPoints)) {
-                    Rect2d[] facePoints = trackerPoints.toArray();
-                    for(int i=0; i<facePoints.length; i++)
-                    {
-                        Imgproc.rectangle(rgba, facePoints[i].tl(), facePoints[i].br(), new Scalar(255, 255, 255), 1);
-                    }
-                } else {
-                    myTimer.scheduleAtFixedRate(new trackFace(gray), 1000, 5*1000);
+                    Imgproc.rectangle(rgba, trackerPoints.tl(), trackerPoints.br(), new Scalar(255, 255, 255), 1);
                 }
             }
         }
@@ -137,7 +135,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     public void setModelDetection(int model) {
         switch(model) {
             case 0:
-                faceModel = "cascade2.xml";
+                faceModel = "cascade.xml";
                 break;
             case 1:
                 faceModel = "lbp.xml";
@@ -155,10 +153,9 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
 
     @Override
-    public int isDetected() {
+    public void isDetected(Promise promise) {
         Resources.enhance(gray, faces);
-        int status = Resources.checkDetection(faces, gray);
-        return status;
+        myTimer.schedule(new trackFace(true, promise), 0);
     }
 
     @Override
@@ -235,27 +232,46 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     }
 
     private class trackFace extends TimerTask {
-        private Mat gray;
+        boolean onDetect;
+        Promise promise;
 
-        public trackFace(Mat gray) {
-            this.gray = gray;
+        public trackFace(boolean onDetect, Promise promise) {
+            this.onDetect = onDetect;
+            this.promise = promise;
         }
+
         @Override
         public void run() {
-            //classifier.detectMultiScale(gray, faces, 1.5, 7, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
-            classifier.detectMultiScale(gray, faces, 1.4, 5, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
-            if (!faces.empty()) {
-                Rect[] facesArray = faces.toArray();
-                Rect2d[] trackerArr = new Rect2d[facesArray.length];
-                trackerPoints = new MatOfRect2d();
-                ArrayList<Rect2d> points = new ArrayList<>();
-                tracker = MultiTracker.create();
-                for (int i = 0; i < facesArray.length; i++) {
-                    points.add(new Rect2d(facesArray[i].tl(), facesArray[i].br()));
-                    tracker.add(TrackerMedianFlow.create(), gray, points.get(i));
-                    trackerArr[i] = points.get(i);
+            if(gray != null) {
+                if(quality == Quality.MEDIUM)
+                    classifier.detectMultiScale(gray, faces, 1.4, 3, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
+                else
+                    classifier.detectMultiScale(gray, faces, 1.6, 3, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
+
+                if (!faces.empty()) {
+                    Rect[] facesArray = faces.toArray();
+                    trackerPoints = new Rect2d(facesArray[0].tl(), facesArray[0].br());
+                    tracker = TrackerMedianFlow.create();
+                    tracker.init(gray, trackerPoints);
                 }
-                trackerPoints.fromArray(trackerArr);
+
+                if(onDetect){
+                    int res = Resources.checkDetection(faces, gray);
+                    switch(res) {
+                        case Resources.detection.UKNOWN_FACE:
+                            promise.reject("UNKNOWN_FACE", "Seems no face in camera");
+                            break;
+                        case Resources.detection.BLURRED_IMAGE:
+                            promise.reject("BLURRED_IMAGE", "Photo is blurred. Snap new one!");
+                            break;
+                        /*case Resources.detection.MULTIPLE_FACES:
+                            promise.reject("MULTIPLE_FACES", "Multiple faces detection is not supported");
+                            break;*/
+                        default:
+                            promise.resolve(null);
+                            break;
+                    }
+                }
             }
         }
     }

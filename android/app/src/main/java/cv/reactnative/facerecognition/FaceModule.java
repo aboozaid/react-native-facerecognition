@@ -114,20 +114,7 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
             public void execute(NativeViewHierarchyManager nativeViewHierarchyManager) {
                 final FrameLayout view = (FrameLayout) nativeViewHierarchyManager.resolveView(viewFlag);
                 final CameraModel camera = (CameraModel) view.findViewById(R.id.camera_view);
-                switch(camera.isDetected()) {
-                    case Resources.detection.UKNOWN_FACE:
-                        promise.reject("UKNOWN_FACE", "Couldn't find any face");
-                        break;
-                    case Resources.detection.BLURRED_IMAGE:
-                        promise.reject("BLURRED_IMAGE", "Photo is blurred. Snap new one!");
-                        break;
-                    case Resources.detection.MULTIPLE_FACES:
-                        promise.reject("MULTIPLE_FACES", "Multiple faces detection is not supported");
-                        break;
-                    default:
-                        promise.resolve(null);
-                        break;
-                }
+                camera.isDetected(promise);
             }
         });
     }

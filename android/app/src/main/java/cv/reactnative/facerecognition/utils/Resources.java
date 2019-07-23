@@ -24,7 +24,7 @@ public class Resources {
     public interface detection {
         int UKNOWN_FACE = 0;
         int BLURRED_IMAGE = 1;
-        int MULTIPLE_FACES = 2;
+        //int MULTIPLE_FACES = 2;
         int DETECTION_SUCCESS = 3;
     }
 
@@ -45,10 +45,7 @@ public class Resources {
             if(isBlurImage(grayImage))
                 return detection.BLURRED_IMAGE;
             else {
-                if(faces.toArray().length > 1)
-                    return detection.MULTIPLE_FACES;
-                else
-                    return detection.DETECTION_SUCCESS;
+                return detection.DETECTION_SUCCESS;
             }
         } else
             return detection.UKNOWN_FACE;
