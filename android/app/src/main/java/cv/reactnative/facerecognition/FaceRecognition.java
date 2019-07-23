@@ -137,7 +137,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     public void setModelDetection(int model) {
         switch(model) {
             case 0:
-                faceModel = "cascade.xml";
+                faceModel = "cascade2.xml";
                 break;
             case 1:
                 faceModel = "lbp.xml";
@@ -216,8 +216,6 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         if(!storage.isEmpty() || datasetLoaded) {
             train();
         }
-
-        Log.i(TAG, "HOW MANY THIS WILL BE DISPLAYED?");
     }
 
 
@@ -244,7 +242,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         }
         @Override
         public void run() {
-            //classifier.detectMultiScale(gray, faces, 1.7, 5, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
+            //classifier.detectMultiScale(gray, faces, 1.5, 7, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
             classifier.detectMultiScale(gray, faces, 1.4, 5, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
             if (!faces.empty()) {
                 Rect[] facesArray = faces.toArray();
