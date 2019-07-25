@@ -21,13 +21,6 @@ import java.util.ArrayList;
 
 public class Resources {
 
-    public interface detection {
-        int UKNOWN_FACE = 0;
-        int BLURRED_IMAGE = 1;
-        //int MULTIPLE_FACES = 2;
-        int DETECTION_SUCCESS = 3;
-    }
-
     public static Activity scanForActivity(Context viewContext) {
         if (viewContext == null)
             return null;
@@ -40,7 +33,7 @@ public class Resources {
         return null;
     }
 
-    public static int checkDetection(final MatOfRect faces, final Mat grayImage) {
+    /*public static int checkDetection(final MatOfRect faces, final Mat grayImage) {
         if(!faces.empty()) {
             if(isBlurImage(grayImage))
                 return detection.BLURRED_IMAGE;
@@ -49,11 +42,13 @@ public class Resources {
             }
         } else
             return detection.UKNOWN_FACE;
-    }
+    }*/
 
-    public static void enhance(Mat photo, MatOfRect faces) {
-        cropImage(faces, photo);
-        improvements(photo);
+    public static Mat enhance(Mat photo, MatOfRect faces) {
+        photo = cropImage(faces, photo);
+        photo = improvements(photo);
+
+        return photo;
     }
 
     private static Mat improvements(final Mat image) {
@@ -69,23 +64,20 @@ public class Resources {
     }
 
     private static Mat cropImage(final MatOfRect faces, final Mat image) {
-        if(!faces.empty()) {
-            Rect rect_crop = null;
-            MatOfPoint2f points = new MatOfPoint2f();
-            ArrayList<Point> rectPoints = new ArrayList<>();
-            for (Rect face : faces.toArray()) {
-                rect_crop = new Rect(face.x, face.y, face.width, face.height);
-                rectPoints.add(new Point(face.tl().x, face.br().y));
-            }
-            points.fromList(rectPoints);
-            Mat cropedFace = new Mat(image, rect_crop);
-
-            return cropedFace;
+        Rect rect_crop = null;
+        MatOfPoint2f points = new MatOfPoint2f();
+        ArrayList<Point> rectPoints = new ArrayList<>();
+        for (Rect face : faces.toArray()) {
+            rect_crop = new Rect(face.x, face.y, face.width, face.height);
+            rectPoints.add(new Point(face.tl().x, face.br().y));
         }
-        return image;
+        points.fromList(rectPoints);
+        Mat cropedFace = new Mat(image, rect_crop);
+
+        return cropedFace;
     }
 
-    private static boolean isBlurImage(final Mat grayImage) {
+    public static boolean isBlurImage(final Mat grayImage) {
 
         int l = CvType.CV_8UC1; //8-bit grey scale image
         Mat dst2 = new Mat();

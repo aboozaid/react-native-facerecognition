@@ -8,6 +8,5 @@ public interface CameraCallbacks {
     void onCameraStarted();
     void onCameraStopped();
     void onCameraFrame(Mat rgba, Mat gray);
-    void onCameraResume();
     void onCameraPause();
 }

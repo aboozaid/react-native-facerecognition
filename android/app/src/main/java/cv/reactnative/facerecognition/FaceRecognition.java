@@ -8,6 +8,7 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -53,16 +54,14 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     protected int confidence;
     private String faceModel;
     private Tinydb storage;
-    private MatOfRect faces;
-    private CascadeClassifier classifier;
-    private Tracker tracker;
-    private Rect2d trackerPoints;
     private Timer myTimer = new Timer(true);
     private onTrained trainingCallback;
     private onRecognized recognitionCallback;
-    private Mat gray;
+    private Mat mGray, mRgba;
+    private Mat captured;
     private boolean datasetEnabled = false;
     private boolean datasetLoaded = false;
+    private FaceDetection mDetection;
 
     public interface onTrained {
         void onComplete();
@@ -84,17 +83,17 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     private CameraCallbacks camera = new CameraCallbacks() {
         @Override
         public void onCameraStarted() {
-            faces = new MatOfRect();
             myTimer = new Timer(true);
+            mDetection = new FaceDetection(getContext(), quality, faceModel);
+            mGray = new Mat();
+            mRgba = new Mat();
 
             if(datasetEnabled && !datasetLoaded) {
                 getDataset task = new getDataset(getContext());
                 task.execute();
             }
 
-            myTimer.scheduleAtFixedRate(new trackFace(false, null), 0, 3*1000);
-
-
+            myTimer.scheduleAtFixedRate(new FrameTimer(), 0, 2*1000);
         }
 
         @Override
@@ -105,17 +104,10 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         @Override
         public void onCameraFrame(Mat rgba, Mat gray) {
 
-            FaceRecognition.this.gray = gray;
-            if(classifier != null) {
-                if(tracker != null && tracker.update(gray, trackerPoints)) {
-                    Imgproc.rectangle(rgba, trackerPoints.tl(), trackerPoints.br(), new Scalar(255, 255, 255), 1);
-                }
-            }
-        }
+            mGray = gray;
+            mRgba = rgba;
 
-        @Override
-        public void onCameraResume() {
-            // opencv loaded
+            mDetection.update(mGray, mRgba);
 
         }
 
@@ -142,8 +134,6 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
                 break;
         }
 
-        getClassifier task = new getClassifier(getContext(), faceModel);
-        task.execute();
     }
 
     @Override
@@ -154,8 +144,19 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
     @Override
     public void isDetected(Promise promise) {
-        Resources.enhance(gray, faces);
-        myTimer.schedule(new trackFace(true, promise), 0);
+        captured = mGray.clone();
+        switch(mDetection.isFace(captured)) {
+            case FaceDetection.detection.UKNOWN_FACE:
+                promise.reject("UNKNOWN_FACE", "Find a face!");
+                break;
+            case FaceDetection.detection.BLURRED_IMAGE:
+                promise.reject("BLURRED_IMAGE", "Photo is blurred. Snap new one!");
+                break;
+            case FaceDetection.detection.DETECTION_SUCCESS:
+                captured = mDetection.crop(captured);
+                promise.resolve(null);
+                break;
+        }
     }
 
     @Override
@@ -174,15 +175,16 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
         String name = info.getString("fname");
 
-        storage.setImage(gray);
+        storage.setImage(captured);
         storage.setLabel(name);
-
+        //savePic(captured);
         train();
     }
 
     @Override
     public void isRecognized() {
-        String result = recognizer.recognize(gray);
+        //savePic(captured);
+        String result = recognizer.recognize(captured);
         if(result != null) {
             recognitionCallback.onComplete(result);
         } else {
@@ -199,6 +201,24 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         else
             trainingCallback.onFail("Trained failed");
     }
+
+    /*public void savePic(Mat cap){
+        Bitmap bitmap = Bitmap.createBitmap(cap.cols(), cap.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(cap, bitmap);
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)+"/facerecognition");
+        if(!dir.exists())
+            dir.mkdirs();
+        File file = new File(dir, Math.random() + ".png");
+        FileOutputStream fOut = null;
+        try {
+            fOut = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 85, fOut);
+            fOut.flush();
+            fOut.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }*/
 
 
     @Override
@@ -231,96 +251,18 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         this.recognitionCallback = callback;
     }
 
-    private class trackFace extends TimerTask {
-        boolean onDetect;
-        Promise promise;
 
-        public trackFace(boolean onDetect, Promise promise) {
-            this.onDetect = onDetect;
-            this.promise = promise;
-        }
+    private class FrameTimer extends TimerTask {
 
         @Override
         public void run() {
-            if(gray != null) {
-                if(quality == Quality.MEDIUM)
-                    classifier.detectMultiScale(gray, faces, 1.4, 3, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
-                else
-                    classifier.detectMultiScale(gray, faces, 1.6, 3, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
-
-                if (!faces.empty()) {
-                    Rect[] facesArray = faces.toArray();
-                    trackerPoints = new Rect2d(facesArray[0].tl(), facesArray[0].br());
-                    tracker = TrackerMedianFlow.create();
-                    tracker.init(gray, trackerPoints);
-                }
-
-                if(onDetect){
-                    int res = Resources.checkDetection(faces, gray);
-                    switch(res) {
-                        case Resources.detection.UKNOWN_FACE:
-                            promise.reject("UNKNOWN_FACE", "Seems no face in camera");
-                            break;
-                        case Resources.detection.BLURRED_IMAGE:
-                            promise.reject("BLURRED_IMAGE", "Photo is blurred. Snap new one!");
-                            break;
-                        /*case Resources.detection.MULTIPLE_FACES:
-                            promise.reject("MULTIPLE_FACES", "Multiple faces detection is not supported");
-                            break;*/
-                        default:
-                            promise.resolve(null);
-                            break;
-                    }
-                }
+            if (mGray != null) {
+                mDetection.detect(mGray, mRgba);
             }
         }
     }
 
-    private class getClassifier extends AsyncTask<Void, Void, Boolean> {
-        private Context context;
-        private String file;
-
-        getClassifier (Context context, String file) {
-            this.context = context;
-            this.file = file;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... strings) {
-            if(context != null) {
-                InputStream inp = null;
-                OutputStream out = null;
-                try {
-                    inp = context.getResources().getAssets().open(file);
-                    File outFile = new File(context.getCacheDir(), file);
-                    out = new FileOutputStream(outFile);
-
-                    byte[] buffer = new byte[4096];
-                    int bytesread;
-                    while ((bytesread = inp.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesread);
-                    }
-
-                    inp.close();
-                    out.flush();
-                    out.close();
-                    return true;
-                } catch (IOException e) {
-                    Log.i(TAG, "Unable to load cascade file" + e);
-                }
-            }
-            Log.d(TAG, "seems that context is null");
-            return false;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean result) {
-            File file = new File(getContext().getCacheDir(), faceModel);
-            classifier = new CascadeClassifier(file.getAbsolutePath());
-        }
-    }
-
-    private class getDataset extends AsyncTask<Integer, Void, Integer> {
+    /*private class getDataset extends AsyncTask<Integer, Void, Integer> {
         private Context context;
 
         getDataset (Context context) {
@@ -375,6 +317,5 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
                 datasetLoaded = true;
             }
 
-        }
+        }*/
     }
-}
