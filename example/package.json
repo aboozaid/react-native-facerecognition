@@ -1,0 +1,26 @@
+{
+  "name": "facerecognition",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "test": "jest"
+  },
+  "dependencies": {
+    "react": "16.8.3",
+    "react-native": "0.59.9",
+    "react-native-dialog-component": "^0.2.17",
+    "react-native-facerecognition": "^2.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/runtime": "^7.5.5",
+    "babel-jest": "^24.8.0",
+    "jest": "^24.8.0",
+    "metro-react-native-babel-preset": "^0.55.0",
+    "react-test-renderer": "16.8.3"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}
