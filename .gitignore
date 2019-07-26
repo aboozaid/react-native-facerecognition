@@ -1,4 +1,4 @@
-android/app/src/main/jniLibs/
+android/app/src/main/jniLibs/*
 android/app/build
 android/opencv/build
 android/app/src/main/assets/dataset/assem_2.jpg

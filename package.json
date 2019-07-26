@@ -1,14 +1,38 @@
 {
   "name": "react-native-facerecognition",
-  "version": "2.0.0",
-  "description": "A face detection and recognition library for React Native. High quality and even Faster!",
+  "version": "3.0.0",
+  "description": "Detect and Recognize faces as fast as possible in react native!",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Assem Abozaid <assemabozaidfcih@gmail.com>",
+  "keywords": [
+    "react",
+    "react-component",
+    "react-native",
+    "android",
+    "face",
+    "facerecognition",
+    "recognition",
+    "detection",
+    "computer-vision",
+    "computer vision",
+    "opencv"
+  ],
+
+  "author": {
+    "name": "Assem Abozaid",
+    "email": "assemabozaidfcih@gmail.com"
+  },
   "license": "MIT",
+  "repository": "https://github.com/assemmohamedali/react-native-facerecognition",
+  "bugs": "https://github.com/assemmohamedali/react-native-facerecognition/issues",
   "peerDependencies": {
-    "react-native": "^0.41.2"
+    "react-native": ">=0.55"
+  },
+  "rnpm": {
+    "android": {
+      "packageInstance": "new FaceModulePackage()"
+    }
   }
 }
