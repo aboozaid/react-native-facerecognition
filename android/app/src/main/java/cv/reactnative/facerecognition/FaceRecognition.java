@@ -36,6 +36,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -88,12 +90,12 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
             mGray = new Mat();
             mRgba = new Mat();
 
-            if(datasetEnabled && !datasetLoaded) {
+            if (datasetEnabled && !datasetLoaded) {
                 getDataset task = new getDataset(getContext());
                 task.execute();
             }
 
-            myTimer.scheduleAtFixedRate(new FrameTimer(), 0, 2*1000);
+            myTimer.scheduleAtFixedRate(new FrameTimer(), 0, 2 * 1000);
         }
 
         @Override
@@ -114,10 +116,10 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         @Override
         public void onCameraPause() {
             // view disabled
-            if(storage != null && !storage.isEmpty()) {
+            if (storage != null && !storage.isEmpty()) {
                 storage.save();
             }
-            if(myTimer != null){
+            if (myTimer != null) {
                 myTimer.cancel();
             }
         }
@@ -125,7 +127,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
     @Override
     public void setModelDetection(int model) {
-        switch(model) {
+        switch (model) {
             case 0:
                 faceModel = "cascade.xml";
                 break;
@@ -145,7 +147,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     @Override
     public void isDetected(Promise promise) {
         captured = mGray.clone();
-        switch(mDetection.isFace(captured)) {
+        switch (mDetection.isFace(captured)) {
             case FaceDetection.detection.UKNOWN_FACE:
                 promise.reject("UNKNOWN_FACE", "Find a face!");
                 break;
@@ -168,7 +170,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
     @Override
     public void toTrain(final ReadableMap info) {
-        if(!info.hasKey("fname")) {
+        if (!info.hasKey("fname")) {
             trainingCallback.onFail("Unable to find the face name");
             return;
         }
@@ -185,10 +187,10 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     public void isRecognized() {
         //savePic(captured);
         String result = recognizer.recognize(captured);
-        if(result != null) {
+        if (result != null) {
             recognitionCallback.onComplete(result);
         } else {
-            if(!storage.isEmpty())
+            if (!storage.isEmpty())
                 recognitionCallback.onFail("UNRECOGNIZED");
             else
                 recognitionCallback.onFail("EMPTY");
@@ -196,7 +198,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     }
 
     private void train() {
-        if(recognizer.train(storage.getImages(), storage.getLabels()))
+        if (recognizer.train(storage.getImages(), storage.getLabels()))
             trainingCallback.onComplete();
         else
             trainingCallback.onFail("Trained failed");
@@ -230,7 +232,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         storage = Tinydb.getInstance(getContext());
         storage.initialize();
 
-        if(!storage.isEmpty() || datasetLoaded) {
+        if (!storage.isEmpty()) {
             train();
         }
     }
@@ -262,37 +264,48 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         }
     }
 
-    /*private class getDataset extends AsyncTask<Integer, Void, Integer> {
+    FaceDetection.dataset dscallback = new FaceDetection.dataset() {
+        @Override
+        public void onDatasetLoaded() {
+            train();
+            datasetLoaded = true;
+        }
+    };
+
+    private class getDataset extends AsyncTask<Boolean, Void, Boolean> {
         private Context context;
 
-        getDataset (Context context) {
+        getDataset(Context context) {
             this.context = context;
         }
 
         @Override
-        protected Integer doInBackground(Integer... strings) {
-            if(context != null) {
+        protected Boolean doInBackground(Boolean... strings) {
+            if (context != null) {
                 InputStream inp = null;
                 AssetManager manager = context.getAssets();
                 try {
                     String[] images = manager.list("dataset");
                     ArrayList<String> listImages = new ArrayList<String>(Arrays.asList(images));
+                    ArrayList<Mat> dataset = new ArrayList<>();
+                    ArrayList<String> names = new ArrayList<>();
 
-                    for(String image : listImages) {
+                    Collections.sort(listImages);
+
+                    for (String image : listImages) {
                         inp = manager.open("dataset/" + image);
-                        if(inp != null) {
+                        if (inp != null) {
                             Bitmap bitmap = BitmapFactory.decodeStream(inp);
                             String[] exp = image.split("_");
                             Mat photo = bitmapToMat(bitmap);
-                            classifier.detectMultiScale(photo, faces, 1.4, 5, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
-                            if(!faces.empty()) {
-                                Resources.enhance(photo, faces);
-                                storage.setImage(photo);
-                                storage.setLabel(exp[0]);
-                            }
+                            dataset.add(photo);
+                            names.add(exp[0]);
+                            //mDetection.detect(photo, exp[0], dscallback);
                         }
                     }
-                    return listImages.size();
+
+                    mDetection.detect(dataset, names, dscallback);
+                    return true;
 
                 } catch (IOException e) {
                     Log.i(TAG, "Unable to load cascade file" + e);
@@ -300,7 +313,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
             }
 
             Log.d(TAG, "seems that context is null");
-            return 0;
+            return false;
         }
 
         private Mat bitmapToMat(Bitmap bitmap) {
@@ -311,11 +324,12 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         }
 
         @Override
-        protected void onPostExecute(Integer result) {
-            if(result > 0) {
+        protected void onPostExecute(Boolean result) {
+            /*if (result > 0) {
                 train();
                 datasetLoaded = true;
-            }
+            }*/
 
-        }*/
+        }
     }
+}

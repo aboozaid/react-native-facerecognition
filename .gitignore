@@ -7,3 +7,5 @@ android/app/src/main/assets/dataset/._assem_2.jpg
 android/app/src/main/assets/dataset/._assem_1.jpg
 android/app/bin
 android/opencv/bin
+*.jpg
+*.png

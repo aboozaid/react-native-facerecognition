@@ -1,9 +1,12 @@
 package cv.reactnative.facerecognition;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.util.Log;
 
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Rect;
@@ -20,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -37,12 +41,18 @@ public class FaceDetection {
     private Tracker tracker;
     private Rect2d trackerPoints;
     private Timer detector = new Timer(true);
+    private Tinydb storage;
+    private dataset callback;
 
     public interface detection {
         int UKNOWN_FACE = 0;
         int BLURRED_IMAGE = 1;
         //int MULTIPLE_FACES = 2;
         int DETECTION_SUCCESS = 3;
+    }
+
+    public interface dataset {
+        void onDatasetLoaded();
     }
 
     public FaceDetection(Context context, int quality, String filename) {
@@ -60,6 +70,16 @@ public class FaceDetection {
 
     public void detect(Mat gray, Mat rgba) {
         detector.schedule(new FaceTimer(gray, rgba), 0);
+    }
+
+    public void detect(ArrayList<Mat> dataset, ArrayList<String> names, dataset callback) {
+        this.callback = callback;
+
+        if(storage == null)
+            storage = Tinydb.getInstance(context);
+
+        Timer timer = new Timer(true);
+        timer.schedule(new DatasetTimer(dataset, names), 0);
     }
 
     public void update(Mat gray, Mat rgba) {
@@ -107,14 +127,21 @@ public class FaceDetection {
         Imgproc.rectangle(rgba, trackerPoints.tl(), trackerPoints.br(), new Scalar(255, 255, 255), 1);
     }
 
+    private void dataset(Mat photo, String name) {
+        photo = Resources.enhance(photo, faces);
+        storage.setImage(photo);
+        storage.setLabel(name);
+    }
+
     private class FaceTimer extends TimerTask {
         Mat gray, rgba;
-
+        String name;
 
         public FaceTimer(Mat gray, Mat rgba) {
             this.gray = gray;
             this.rgba = rgba;
         }
+
 
         @Override
         public void run() {
@@ -126,10 +153,33 @@ public class FaceDetection {
 
                 if (!faces.empty() && faces.toArray().length < 2) {
                     tracker(gray, rgba);
-                } else{
+                } else {
                     clean();
                 }
             }
+        }
+    }
+
+    private class DatasetTimer extends TimerTask {
+        ArrayList<Mat> dataset;
+        ArrayList<String> names;
+
+        public DatasetTimer(ArrayList<Mat> dataset, ArrayList<String> names) {
+            this.dataset = dataset;
+            this.names = names;
+        }
+
+        @Override
+        public void run() {
+            while(cascade == null);
+            for(int i=0; i<dataset.size(); i++) {
+                Mat gray = dataset.get(i);
+                cascade.detectMultiScale(dataset.get(i), faces, 1.4, 3, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
+                if(!faces.empty() && faces.toArray().length < 2) {
+                    dataset(gray, names.get(i));
+                }
+            }
+            callback.onDatasetLoaded();
         }
     }
 
