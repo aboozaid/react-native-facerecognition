@@ -90,11 +90,15 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
             mRgba = new Mat();
 
             if (datasetEnabled && !storage.isDatasetLoaded()) {
-                getDataset task = new getDataset(getContext());
-                task.execute();
+                if(faceModel.contains("lbf")) {
+                    throw new Error("you cannot use landmarks model with dataset enabled");
+                }else {
+                    getDataset task = new getDataset(getContext());
+                    task.execute();
+                }
+            }else {
+                startTimer();
             }
-
-            myTimer.scheduleAtFixedRate(new FrameTimer(), 0, 2 * 1000);
         }
 
         @Override
@@ -124,17 +128,23 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         }
     };
 
+    private void startTimer() {
+        if(faceModel.contains("lbf"))
+            myTimer.scheduleAtFixedRate(new FrameTimer(), 0, 500);
+        else
+            myTimer.scheduleAtFixedRate(new FrameTimer(), 0, 2*1000);
+    }
+
     @Override
     public void setModelDetection(int model) {
         switch (model) {
-            case 0:
+            case FaceModule.Model.LANDMARKS:
+                faceModel = "lbfmodel.yaml";
+                break;
+            case FaceModule.Model.LBP:
                 faceModel = "cascade.xml";
                 break;
-            case 1:
-                faceModel = "lbp.xml";
-                break;
         }
-
     }
 
     @Override
@@ -178,13 +188,13 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
         storage.setImage(captured);
         storage.setLabel(name);
-        //savePic(captured);
+        savePic(captured);
         train();
     }
 
     @Override
     public void isRecognized() {
-        //savePic(captured);
+        savePic(captured);
         String result = recognizer.recognize(captured);
         if (result != null) {
             recognitionCallback.onComplete(result);
@@ -203,7 +213,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
             trainingCallback.onFail("TRAINED_FAILED");
     }
 
-    /*public void savePic(Mat cap){
+    public void savePic(Mat cap){
         Bitmap bitmap = Bitmap.createBitmap(cap.cols(), cap.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(cap, bitmap);
         File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)+"/facerecognition");
@@ -219,7 +229,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }*/
+    }
 
 
     @Override
@@ -268,6 +278,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         public void onDatasetLoaded() {
             train();
             storage.datasetLoaded();
+            startTimer();
         }
     };
 
@@ -299,7 +310,6 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
                             Mat photo = bitmapToMat(bitmap);
                             dataset.add(photo);
                             names.add(exp[0]);
-                            //mDetection.detect(photo, exp[0], dscallback);
                         }
                     }
 
@@ -324,10 +334,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
 
         @Override
         protected void onPostExecute(Boolean result) {
-            /*if (result > 0) {
-                train();
-                datasetLoaded = true;
-            }*/
+
 
         }
     }

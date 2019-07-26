@@ -53,8 +53,8 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
     }
 
     public interface Model {
-        int DefaultModule = 0;
-        int LBPCascade = 1;
+        int LANDMARKS = 0;
+        int LBP = 1;
     }
 
 
@@ -63,8 +63,8 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
         final Map<String, Object> constants = new HashMap<>();
 
         WritableMap module = Arguments.createMap();
-        module.putInt("cascade", Model.DefaultModule);
-        module.putInt("lbp", Model.LBPCascade);
+        module.putInt("landmarks", Model.LANDMARKS);
+        module.putInt("lbp", Model.LBP);
 
         WritableMap aspectMap = Arguments.createMap();
         aspectMap.putInt("stretch", CameraSettings.CameraAspectStretch);

@@ -8,11 +8,17 @@ import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.MatOfRect;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Rect2d;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.face.Face;
+import org.opencv.face.Facemark;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.tracking.Tracker;
@@ -43,6 +49,9 @@ public class FaceDetection {
     private Timer detector = new Timer(true);
     private Tinydb storage;
     private dataset callback;
+    private Facemark marks;
+    private ArrayList<MatOfPoint2f> landmarks;
+    private Rect rect;
 
     public interface detection {
         int UKNOWN_FACE = 0;
@@ -60,7 +69,11 @@ public class FaceDetection {
         this.quality = quality;
 
         faces = new MatOfRect();
-        loadclassifier(filename);
+        if(filename.contains("lbfmodel")) {
+            loadclassifier(filename);
+            loadclassifier("lbp.xml");
+        } else
+            loadclassifier(filename);
     }
 
     private void loadclassifier(String filename) {
@@ -83,18 +96,28 @@ public class FaceDetection {
     }
 
     public void update(Mat gray, Mat rgba) {
-        if(tracker != null && tracker.update(gray, trackerPoints)){
+        if(tracker != null && tracker.update(gray, trackerPoints) && marks == null){
             draw(rgba);
+        }
+
+        if(marks != null){
+            if(fit(gray)) {
+                drawLandmarks(rgba);
+            }
         }
     }
 
-    private void tracker(Mat gray, Mat rgba) {
+    private boolean fit(Mat gray) {
+        landmarks = new ArrayList<>();
+        return marks.fit(gray, faces, landmarks);
+    }
+
+    private void tracker(Mat gray) {
         Rect[] facesArray = faces.toArray();
         trackerPoints = new Rect2d(facesArray[0].tl(), facesArray[0].br());
         tracker = TrackerMedianFlow.create();
         tracker.init(gray, trackerPoints);
 
-        draw(rgba);
     }
 
     private void clean() {
@@ -104,10 +127,16 @@ public class FaceDetection {
             tracker = null;
             trackerPoints = new Rect2d();
         }
+
+        if(marks != null && landmarks != null) {
+            landmarks.clear();
+            marks.clear();
+            marks.empty();
+        }
     }
 
     public int isFace(Mat gray) {
-        if(trackerPoints != null && !trackerPoints.empty()) {
+        if((trackerPoints != null && !trackerPoints.empty()) || (marks != null && !landmarks.isEmpty())) {
             if(Resources.isBlurImage(gray)) {
                 return detection.BLURRED_IMAGE;
             }else {
@@ -119,7 +148,12 @@ public class FaceDetection {
     }
 
     public Mat crop(Mat gray) {
-        Mat cropped = Resources.enhance(gray, faces);
+        Mat cropped;
+        if(marks == null)
+            cropped = Resources.enhance(gray, faces);
+        else
+            cropped = Resources.enhance(gray, rect);
+
         return cropped;
     }
 
@@ -127,11 +161,62 @@ public class FaceDetection {
         Imgproc.rectangle(rgba, trackerPoints.tl(), trackerPoints.br(), new Scalar(255, 255, 255), 1);
     }
 
+    private void drawLandmarks(Mat rgba) {
+
+        for (int i=0; i<landmarks.size(); i++) {
+            MatOfPoint2f lm = landmarks.get(i);
+            Point[] points = lm.toArray();
+
+            if(points.length == 68) {
+                drawPolyLines(0,16, lm, rgba);
+                drawPolyLines(17,21, lm,rgba);
+                drawPolyLines(22,26, lm,rgba);
+            }
+
+            rect = createRect(lm);
+
+            Imgproc.rectangle(rgba, rect, new Scalar(255,255,255));
+        }
+    }
+
+    private Rect createRect(MatOfPoint2f lm) {
+        RotatedRect rotaterect = Imgproc.minAreaRect(lm);
+        Rect rect = rotaterect.boundingRect();
+        return rect;
+    }
+
+    private void drawPolyLines(int start, int end, MatOfPoint2f marks, Mat rgba) {
+        Point[] points = marks.toArray();
+        for(int i= start; i < end; i++) {
+            Imgproc.line(rgba, new Point(points[i].x, points[i].y), new Point(points[i+1].x, points[i+1].y) ,new Scalar(255,255,255));
+        }
+    }
+
     private void dataset(Mat photo, String name) {
         photo = Resources.enhance(photo, faces);
         storage.setImage(photo);
         storage.setLabel(name);
+
+        //savePic(photo);
     }
+
+    /*public void savePic(Mat cap){
+        Bitmap bitmap = Bitmap.createBitmap(cap.cols(), cap.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(cap, bitmap);
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)+"/facerecognition");
+        if(!dir.exists())
+            dir.mkdirs();
+        File file = new File(dir, Math.random() + ".png");
+        FileOutputStream fOut = null;
+        try {
+            fOut = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 85, fOut);
+            fOut.flush();
+            fOut.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }*/
 
     private class FaceTimer extends TimerTask {
         Mat gray, rgba;
@@ -152,7 +237,8 @@ public class FaceDetection {
                     cascade.detectMultiScale(gray, faces, 1.6, 3, CASCADE_DO_CANNY_PRUNING, new Size(30, 30));
 
                 if (!faces.empty() && faces.toArray().length < 2) {
-                    tracker(gray, rgba);
+                    if(marks == null)
+                        tracker(gray);
                 } else {
                     clean();
                 }
@@ -199,18 +285,21 @@ public class FaceDetection {
                 OutputStream out = null;
                 try {
                     inp = context.getResources().getAssets().open(filename);
-                    File outFile = new File(context.getCacheDir(), filename);
-                    out = new FileOutputStream(outFile);
+                    File outFile = new File(context.getDir("files", Context.MODE_PRIVATE), filename);
+                    if(!outFile.exists()) {
+                        out = new FileOutputStream(outFile);
 
-                    byte[] buffer = new byte[4096];
-                    int bytesread;
-                    while ((bytesread = inp.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesread);
+                        byte[] buffer = new byte[4096];
+                        int bytesread;
+                        while ((bytesread = inp.read(buffer)) != -1) {
+                            out.write(buffer, 0, bytesread);
+                        }
+
+                        inp.close();
+                        out.flush();
+                        out.close();
+                        Log.i(TAG, "********** FILE LOADED ***********");
                     }
-
-                    inp.close();
-                    out.flush();
-                    out.close();
                     return true;
                 } catch (IOException e) {
                     Log.i(TAG, "Unable to load cascade file" + e);
@@ -223,8 +312,13 @@ public class FaceDetection {
         @Override
         protected void onPostExecute(Boolean result) {
             if (result) {
-                File file = new File(context.getCacheDir(), filename);
-                cascade = new CascadeClassifier(file.getAbsolutePath());
+                File file = new File(context.getDir("files", Context.MODE_PRIVATE), filename);
+                if(!filename.contains("lbfmodel"))
+                    cascade = new CascadeClassifier(file.getAbsolutePath());
+                else {
+                    marks = Face.createFacemarkLBF();
+                    marks.loadModel(file.getAbsolutePath());
+                }
 
             }
         }

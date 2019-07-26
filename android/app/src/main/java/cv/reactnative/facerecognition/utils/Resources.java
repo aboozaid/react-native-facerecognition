@@ -51,6 +51,13 @@ public class Resources {
         return photo;
     }
 
+    public static Mat enhance(Mat photo, Rect rect) {
+        Mat cropped = new Mat(photo, rect);
+        cropped = improvements(cropped);
+
+        return cropped;
+    }
+
     private static Mat improvements(final Mat image) {
         Mat improve = new Mat();
         CLAHE clahe = Imgproc.createCLAHE();
