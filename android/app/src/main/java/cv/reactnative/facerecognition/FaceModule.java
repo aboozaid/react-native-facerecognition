@@ -106,7 +106,7 @@ public class FaceModule extends ReactContextBaseJavaModule implements LifecycleE
     }
 
     @ReactMethod
-    public void detection(final int viewFlag,final Promise promise) {
+    public void detection(final int viewFlag, final Promise promise) {
         final ReactApplicationContext rctx = getReactApplicationContext();
         UIManagerModule uiManager = rctx.getNativeModule(UIManagerModule.class);
         uiManager.addUIBlock(new UIBlock() {

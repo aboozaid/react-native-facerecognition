@@ -101,6 +101,12 @@ public class Tinydb {
     public boolean isEmpty() {
         return images.isEmpty();
     }
+    public void datasetLoaded() {
+        preferences.edit().putString("dataset", "loaded").apply();
+    }
+    public boolean isDatasetLoaded() {
+        return preferences.contains("dataset");
+    }
     /*public void checkForNullKey(String key){
         if (key == null){
             throw new NullPointerException();
@@ -112,6 +118,7 @@ public class Tinydb {
         labels.clear();
         preferences.edit().remove("images").commit();
         preferences.edit().remove("labels").commit();
+        preferences.edit().remove("dataset").commit();
         save();
 
         return true;

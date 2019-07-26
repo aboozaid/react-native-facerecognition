@@ -62,7 +62,6 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     private Mat mGray, mRgba;
     private Mat captured;
     private boolean datasetEnabled = false;
-    private boolean datasetLoaded = false;
     private FaceDetection mDetection;
 
     public interface onTrained {
@@ -90,7 +89,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
             mGray = new Mat();
             mRgba = new Mat();
 
-            if (datasetEnabled && !datasetLoaded) {
+            if (datasetEnabled && !storage.isDatasetLoaded()) {
                 getDataset task = new getDataset(getContext());
                 task.execute();
             }
@@ -171,7 +170,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
     @Override
     public void toTrain(final ReadableMap info) {
         if (!info.hasKey("fname")) {
-            trainingCallback.onFail("Unable to find the face name");
+            trainingCallback.onFail("UNKNOWN_NAME");
             return;
         }
 
@@ -201,7 +200,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         if (recognizer.train(storage.getImages(), storage.getLabels()))
             trainingCallback.onComplete();
         else
-            trainingCallback.onFail("Trained failed");
+            trainingCallback.onFail("TRAINED_FAILED");
     }
 
     /*public void savePic(Mat cap){
@@ -268,7 +267,7 @@ public class FaceRecognition extends BaseCameraView implements CameraModel {
         @Override
         public void onDatasetLoaded() {
             train();
-            datasetLoaded = true;
+            storage.datasetLoaded();
         }
     };
 
