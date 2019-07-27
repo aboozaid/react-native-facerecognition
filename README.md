@@ -139,7 +139,7 @@ project(':openCV').projectDir = new File(rootProject.projectDir, '../node_module
 
 * First, put this line into `MainApplication.java` and its path `projectName/android/app/src/main/java/com/projectName/MainApplication.java`.
 ~~~
-import opencv.android.FaceModulePackage;
+import cv.reactnative.facerecognition.FaceModulePackage;
 ...
 return Arrays.<ReactPackage>asList(
   new FaceModulePackage()
@@ -153,7 +153,7 @@ buildToolsVersion "26.0.2"
 ....
 ....
 dependencies {
-  compile project(':react-native-facerecognition')
+  implementation project(':react-native-facerecognition')
   }
 ~~~
 * Inside `settings.gradle ` put these lines you can find the path at `projectName/android/settings.gradle` 
