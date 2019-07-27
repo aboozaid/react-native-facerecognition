@@ -1,6 +1,6 @@
 {
   "name": "react-native-facerecognition",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Detect and Recognize faces as fast as possible in react native!",
   "main": "src/index.js",
   "scripts": {
