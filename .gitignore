@@ -3,5 +3,3 @@ android/app/build
 android/opencv/build
 android/app/bin
 android/opencv/bin
-*.jpg
-*.png
