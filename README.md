@@ -9,48 +9,40 @@
 [![Join us on Slack](https://img.shields.io/badge/Slack-react--native--facerecognition-orange.svg)](https://join.slack.com/t/rn-facerecognition/shared_invite/enQtNDAzNTQzMzczMzUwLThlMzhkMDU0ZGMyZjJmYzEwZTVjZmQzYjBiNmIwZDgyNDZkMmYwZWQzOGYwNzE3YmRkMTZmMmQxMGQ3YmY1OTg)
 
 # Summary
-💥 We've released new version of the library @2.0.0!
+💥 New version with new features @3.0.0!
 <hr>
-Detect and Recognize faces are essential on the mobile world especially when you need to deal with computer vision on your app and it also gives you more flexibility to detect/track multiple faces on screen as well as high accuracy to recognize every face.
-
-This library makes it easier for you to do your smarter idea if it depends on people faces or even to do hard tasks such as:
-* Authentication
-* Tracking
-* Make something when specific person appears
+Do you ever want to detect and recognize faces? this is now possible especially in react native, This lib aims to provide best detection and recognition results as well as facial landmarks.
 
 ## Important
 * New to Face Recognition? We recommend you start with the default values which described below.
 * Looking to contribute? feel free to join our community on [Slack](https://join.slack.com/t/rn-facerecognition/shared_invite/enQtNDAzNTQzMzczMzUwLThlMzhkMDU0ZGMyZjJmYzEwZTVjZmQzYjBiNmIwZDgyNDZkMmYwZWQzOGYwNzE3YmRkMTZmMmQxMGQ3YmY1OTg), and take a look into coming updates.
-* If you're trying to use the library on the last version of react native (0.56.0) it won't work as this version still has many bugs to fix.
 * If the library doesn't work with you, you need to check your mobile's CPU if it one of those:
   * `x86 CPU` Download this package [Click here](https://mega.nz/#F!tME1gYxD!SdeQGNt6lEi9qr05vbE1kg)
   * `x86_64 CPU` Download this package [Click here](https://mega.nz/#F!MAdDzCAA!UeHKjeGfBU5pzEdazUCUmA)
   * `arm64-v8a CPU` Download this package [Click here](https://mega.nz/#F!9cclDKyb!g5CQvTc7F17hN5d8T2DoLA)<br>
   
-After downloading on of those package you need to put that file into this location `react-native-facerecognition/android/app/src/main/jniLibs` and that's all!
+After downloading you need to put that package into this location `react-native-facerecognition/android/app/src/main/jniLibs` and that's all!
 
 >⚠️ Since we're focusing our efforts on next updates, we are really welcome for any issues/pulls to improve the way we go.
 
 ## Features
-* Multiple Detection
-* Fast Recognition (LBPH Algorithm only)
-* Tracking faces on screen
-* Easy to use
+* Face Detection
+* Face Recognition (LBPH Algorithm only)
+* Tracking face
+* Facial landmarks
+* Train your own dataset
 * Without any internet!
 * All devices supported.
 
 ## Upcoming updates
 * Add EagenFace Algorithm ❌
 * Add Fisherface Algorithm ❌
-* Expo support ❌
-* Automatic Recognition and Detection ❌
 * UI Component ✔️
 
 ### Real world examples
 
-![Detection Faces](https://thumbs.gfycat.com/WeeHilariousAsianelephant-size_restricted.gif)
-![Detection Faces](https://thumbs.gfycat.com/ShockedCheapIvorybackedwoodswallow-size_restricted.gif)
-
+![Tracker Face](/docs/tracker.gif)
+![Landmarks Face](/docs/landmarks.gif)
 
 <hr>
 
@@ -59,21 +51,27 @@ After downloading on of those package you need to put that file into this locati
 import Camera from 'react-native-facerecognition';
 ...
 <Camera
-    ref={(cam) => {
-      this.camera = cam;
-    }}
-    style={styles.preview}
-    aspect={Camera.constants.Aspect.fill}
-    captureQuality={Camera.constants.CaptureQuality.medium}
-    cameraType={Camera.constants.CameraType.front}
-    model = {Camera.constants.Model.cascade}
-    onTrained = {this.onTrained}
-    onRecognized = {this.onRecognized}
-    onUntrained = {this.onUntrained}
-    onUnrecognized = {this.onUnrecognized}
-  />
+          ref={(cam) => {
+            this.camera = cam;
+          }}
+          style={styles.preview}
+          aspect={Camera.constants.Aspect.fill}
+          captureQuality={Camera.constants.CaptureQuality.high}
+          touchToFocus
+          torchMode={Camera.constants.TorchMode.on}
+          rotateMode={Camera.constants.RotateMode.on}
+          cameraType={Camera.constants.CameraType.front}
+          model = {Camera.constants.Model.lbp}
+          dataset
+          distance = {200}
+          onTrained = {this.onTrained}
+          onRecognized = {this.onRecognized}
+          onUntrained = {this.onUntrained}
+          onUnrecognized = {this.onUnrecognized}
+        />
 ~~~
-🔥 [Checkout](https://github.com/assemmohamedali/react-native-facerecognition/tree/master/Example) our main example to get the right way to start your own recognition.
+
+🔥 [Checkout](https://github.com/assemmohamedali/react-native-facerecognition/tree/master/example) our main example to get the right way to start.
 
 ## Get Started
 
@@ -186,8 +184,10 @@ How it works:
 ### 1.3 Props
 
 `model`
-* Camera.constants.Model.cascade
+* Camera.constants.Model.cascade [DEPRECATED]
   * Higher recall & More trained faces
+* Camera.constants.Model.landmarks
+  * Higher accuracy at recognition
 * Camera.constants.Model.lbp
   * Higher precision & Faster & Less trained faces
   
@@ -198,20 +198,22 @@ How it works:
 `captureQuality`
 * Camera.constants.CaptureQuality.low
 * Camera.constants.CaptureQuality.medium
-  * Highly recommended
 * Camera.constants.CaptureQuality.high
-  * May work slow on multiple detection
   
 `aspect`
 * Camera.constants.Aspect.fit
 * Camera.constants.Aspect.fill
 * Camera.constants.Aspect.stretch
 
+`dataset` (default: false)
+ * train your own images. copy Images to that location at `android/app/src/main/assets/dataset` inside that folder.
+ > if you will use this, you need to use lbp model only in order to make it work. Please see the test photo there to know how to rename your photos according to that test photo every photo should be named like that name_number.jpg/png.
+ 
 `distance`
 ~~~
 <Camera distance = {200} />
 ~~~
-* Distance between the face and the camera. This is very important to keep recognition always works and to help make the result mainly true.
+* Distance between the face and the camera. This is very important to keep recognition always works and to help make the result mainly true (this effects the recognition result grossly).
 
 `rotateMode` - (Landscape/Portrait)
 * Camera.constants.RotateMode.on
@@ -220,13 +222,13 @@ How it works:
 ### 1.4 Functions
 
 * takePicture()
- > Take a picture then processing it to detect face inside
+ > Take a picture then process it to detect face inside
 
 * train(Object)
-> Train the algorithm with the new detected face
+> Train the algorithm with a new detected face
 
 * identify()
-> Take a picture then predict whose face belongs to
+> Take a picture then predict whom face belongs to
 
 * clear()
 > Clear all previous trained faces
@@ -240,16 +242,16 @@ How it works:
 * If training fails this function will be called with the error
 
 `onRecognized`
-You recieved details about recognized face:
+You get details about recognized face:
 * `name` The face name
-* `confidence` This number indicates how much the result is true. Usually low number < 100 means a good result
+* `confidence` This number indicates how much the result is true. Usually low number < 100 means a good result depends on the distance you put
 
 `onUnrecognized`
 * If recognition fails this function will be called with the error
 
 ## Recommendations
 
->If you're not familiar with OpenCV and face recognition you have to be in safe and use our default arguments as we care about all of the details for you. In case of using your own arguments please note that you may effect the accuracy depend on your settings.
+>If you're not familiar with OpenCV and face recognition you have to be in safe and use our default arguments as we care about all of the details for you. In case of using your own arguments please note that you may effect the accuracy depends on your settings.
 
 * Recognition default arguments <br>
 __Arguments__
@@ -257,12 +259,11 @@ __Arguments__
   
 * Training images count<br>
 __Minimum__
-  - Two photos per face (Recommended if you're training for few faces like 2 or 3)
   - There's no maximum but the average is 3~4 photos per face to guarantee high accuracy
 
 ## Updates
 
-🚀 [Updates](https://github.com/assemmohamedali/react-native-facerecognition/blob/master/Updates.md) you can find all previous version and updates up to date!
+🚀 [Updates](https://github.com/assemmohamedali/react-native-facerecognition/blob/master/Updates.md) you can find all previous versions and updates up to date!
 
 ## Thank to
 
