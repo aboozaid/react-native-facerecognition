@@ -9,3 +9,4 @@ android/app/bin
 android/opencv/bin
 *.jpg
 *.png
+._*
