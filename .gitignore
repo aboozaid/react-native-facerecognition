@@ -1,4 +1,3 @@
-android/app/src/main/jniLibs/*
 android/app/build
 android/opencv/build
 android/app/bin
