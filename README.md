@@ -9,7 +9,7 @@
 [![Join us on Slack](https://img.shields.io/badge/Slack-react--native--facerecognition-orange.svg)](https://join.slack.com/t/rn-facerecognition/shared_invite/enQtNDAzNTQzMzczMzUwLThlMzhkMDU0ZGMyZjJmYzEwZTVjZmQzYjBiNmIwZDgyNDZkMmYwZWQzOGYwNzE3YmRkMTZmMmQxMGQ3YmY1OTg)
 
 # Summary
-💥 New version with new features @3.0.0!
+💥 New version with new features @3.1.0!
 <hr>
 Do you ever want to detect and recognize faces? this is now possible especially in react native, This lib aims to provide best detection and recognition results as well as facial landmarks.
 
@@ -206,7 +206,7 @@ How it works:
 * Camera.constants.Aspect.stretch
 
 `dataset` (default: false)
- * train your own images. copy Images to that location at `android/app/src/main/assets/dataset` inside that folder.
+ * train your own images. copy Images to that location at `react-native-facerecognition/android/app/src/main/assets/dataset` inside that folder.
  > if you will use this, you need to use lbp model only in order to make it work. Please see the test photo there to know how to rename your photos according to that test photo every photo should be named like that name_number.jpg/png.
  
 `distance`
